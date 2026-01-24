@@ -1,9 +1,6 @@
 package com.indelo.goods.data.supabase
 
 object SupabaseConfig {
-    // TODO: Replace with your Supabase project URL
-    const val SUPABASE_URL = "https://your-project.supabase.co"
-
-    // TODO: Replace with your Supabase anon/public key
-    const val SUPABASE_ANON_KEY = "your-anon-key"
+    const val SUPABASE_URL = "https://ftojjmukocngssmjgedd.supabase.co"
+    const val SUPABASE_ANON_KEY = "sb_publishable_4UBidGG9V8RxnsNKDvf3hQ_oCNCi09u"
 }
