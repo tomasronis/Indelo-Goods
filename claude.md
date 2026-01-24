@@ -1,0 +1,161 @@
+# Indelo Goods - Project Guide
+
+## Overview
+
+Indelo Goods is a goods/inventory management application. The first version targets Android, with iOS planned for a later phase.
+
+## Tech Stack
+
+### Android (v1)
+- **Language:** Kotlin
+- **UI:** Jetpack Compose with Material 3
+- **Architecture:** MVVM with Repository pattern
+- **Backend:** Supabase
+  - PostgreSQL database
+  - Authentication (email/password)
+  - Realtime subscriptions
+  - Storage for images/files
+- **Networking:** Ktor client
+- **Serialization:** Kotlinx Serialization
+- **Build:** Gradle with Kotlin DSL
+
+### iOS (planned)
+- To be determined (likely SwiftUI with same Supabase backend)
+
+## Project Structure
+
+```
+app/src/main/java/com/indelo/goods/
+├── data/
+│   ├── model/          # Data classes (@Serializable)
+│   ├── repository/     # Data access layer
+│   └── supabase/       # Supabase client configuration
+├── ui/
+│   ├── auth/           # Authentication screens
+│   ├── navigation/     # App navigation
+│   └── theme/          # Colors, typography, theming
+├── IndeloGoodsApplication.kt
+├── MainActivity.kt
+└── MainScreen.kt
+```
+
+## Coding Practices
+
+### General
+- Use Kotlin idioms (data classes, sealed classes, extension functions)
+- Prefer immutability (`val` over `var`)
+- Use `Result<T>` for operations that can fail
+- Keep UI logic in ViewModels, business logic in repositories
+
+### Compose
+- Use `Modifier` as first optional parameter
+- Extract reusable composables
+- Use `remember` and `rememberSaveable` appropriately
+- Preview composables with `@Preview`
+
+### Supabase
+- All Supabase operations through repository classes
+- Use `withContext(Dispatchers.IO)` for database calls
+- Handle errors gracefully with Result type
+- Data classes must be `@Serializable` with `@SerialName` for snake_case columns
+
+### Naming Conventions
+- Files: PascalCase (e.g., `ProductRepository.kt`)
+- Classes/Objects: PascalCase
+- Functions/Variables: camelCase
+- Database columns: snake_case (mapped via `@SerialName`)
+- Composables: PascalCase (they're like components)
+
+## Security
+
+- **Never commit secrets** to version control
+- Supabase credentials stored in `local.properties` (gitignored)
+- Use BuildConfig for runtime access to secrets
+- Enable Row Level Security (RLS) on all Supabase tables
+
+## Database Schema
+
+### Products
+```sql
+CREATE TABLE products (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INTEGER DEFAULT 0,
+    image_url TEXT,
+    category_id UUID REFERENCES categories(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Categories
+```sql
+CREATE TABLE categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## Requirements
+
+### Authentication
+- [ ] Email/password sign up
+- [ ] Email/password sign in
+- [ ] Sign out
+- [ ] Password reset (future)
+- [ ] OAuth providers (future)
+
+### Product Management
+- [ ] List products
+- [ ] View product details
+- [ ] Add new product
+- [ ] Edit product
+- [ ] Delete product
+- [ ] Search products
+- [ ] Filter by category
+
+### Categories
+- [ ] List categories
+- [ ] CRUD operations
+
+### Future Features
+- [ ] Barcode scanning
+- [ ] Image upload for products
+- [ ] Real-time inventory updates
+- [ ] Reporting/analytics
+- [ ] iOS app
+
+## Dependencies
+
+Key dependencies and their purposes:
+- `supabase-kt` - Supabase Kotlin SDK (BOM version 2.6.1)
+- `ktor-client-android` - HTTP client for Supabase
+- `navigation-compose` - Jetpack Compose navigation
+- `lifecycle-viewmodel-compose` - ViewModel integration with Compose
+
+## Testing
+
+- Unit tests in `app/src/test/`
+- Instrumentation tests in `app/src/androidTest/`
+- Use `junit` for unit tests
+- Use `espresso` for UI tests
+
+## Build Commands
+
+```bash
+# Debug build
+./gradlew assembleDebug
+
+# Release build
+./gradlew assembleRelease
+
+# Install debug on device
+./gradlew installDebug
+
+# Run tests
+./gradlew test
+```
