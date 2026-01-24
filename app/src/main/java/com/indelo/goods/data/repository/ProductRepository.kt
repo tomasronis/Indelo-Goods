@@ -55,6 +55,22 @@ class ProductRepository {
         }
     }
 
+    suspend fun getProductsByProducer(producerId: String): Result<List<Product>> = withContext(Dispatchers.IO) {
+        try {
+            val products = postgrest
+                .from("products")
+                .select {
+                    filter {
+                        eq("producer_id", producerId)
+                    }
+                }
+                .decodeList<Product>()
+            Result.success(products)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun searchProducts(query: String): Result<List<Product>> = withContext(Dispatchers.IO) {
         try {
             val products = postgrest

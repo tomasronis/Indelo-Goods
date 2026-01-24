@@ -11,14 +11,31 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.indelo.goods.MainScreen
+import com.indelo.goods.data.model.UserType
 import com.indelo.goods.ui.auth.AuthScreen
-import com.indelo.goods.ui.auth.AuthStep
 import com.indelo.goods.ui.auth.AuthViewModel
+import com.indelo.goods.ui.producer.ProductCreateScreen
+import com.indelo.goods.ui.producer.ProductFormState
+import com.indelo.goods.ui.producer.ProductViewModel
+import com.indelo.goods.ui.producer.ProducerHomeScreen
 import io.github.jan.supabase.auth.status.SessionStatus
 
 sealed class Screen(val route: String) {
     data object Auth : Screen("auth")
     data object Home : Screen("home")
+
+    // Producer screens
+    data object ProducerHome : Screen("producer/home")
+    data object ProductCreate : Screen("producer/product/create")
+    data object ProductEdit : Screen("producer/product/edit/{productId}") {
+        fun createRoute(productId: String) = "producer/product/edit/$productId"
+    }
+
+    // Shop screens (placeholder)
+    data object ShopHome : Screen("shop/home")
+
+    // Shopper screens (placeholder)
+    data object ShopperHome : Screen("shopper/home")
 }
 
 @Composable
@@ -31,7 +48,7 @@ fun AppNavigation(
     val authUiState by authViewModel.uiState.collectAsState()
 
     val startDestination = when (sessionStatus) {
-        is SessionStatus.Authenticated -> Screen.Home.route
+        is SessionStatus.Authenticated -> getHomeRouteForUserType(authUiState.selectedUserType)
         else -> Screen.Auth.route
     }
 
@@ -40,6 +57,7 @@ fun AppNavigation(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // Auth
         composable(Screen.Auth.route) {
             AuthScreen(
                 uiState = authUiState,
@@ -51,7 +69,67 @@ fun AppNavigation(
             )
         }
 
+        // Generic home (redirects based on user type)
         composable(Screen.Home.route) {
+            // Redirect to appropriate home based on user type
+            LaunchedEffect(authUiState.selectedUserType) {
+                authUiState.selectedUserType?.let { userType ->
+                    val route = getHomeRouteForUserType(userType)
+                    if (route != Screen.Home.route) {
+                        navController.navigate(route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            // Fallback while redirecting
+            MainScreen(onSignOut = { authViewModel.signOut() })
+        }
+
+        // Producer screens
+        composable(Screen.ProducerHome.route) {
+            val productViewModel: ProductViewModel = viewModel()
+
+            ProducerHomeScreen(
+                onSignOut = { authViewModel.signOut() },
+                onCreateProduct = { navController.navigate(Screen.ProductCreate.route) },
+                onProductClick = { productId ->
+                    navController.navigate(Screen.ProductEdit.createRoute(productId))
+                },
+                viewModel = productViewModel
+            )
+        }
+
+        composable(Screen.ProductCreate.route) {
+            val productViewModel: ProductViewModel = viewModel()
+            val createState by productViewModel.createState.collectAsState()
+
+            LaunchedEffect(createState.isSuccess) {
+                if (createState.isSuccess) {
+                    productViewModel.clearCreateState()
+                    navController.popBackStack()
+                }
+            }
+
+            ProductCreateScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onProductCreated = { formState ->
+                    productViewModel.createProduct(formState)
+                },
+                isLoading = createState.isLoading
+            )
+        }
+
+        // Shop screens (placeholder)
+        composable(Screen.ShopHome.route) {
+            MainScreen(
+                onSignOut = { authViewModel.signOut() }
+            )
+        }
+
+        // Shopper screens (placeholder)
+        composable(Screen.ShopperHome.route) {
             MainScreen(
                 onSignOut = { authViewModel.signOut() }
             )
@@ -62,10 +140,11 @@ fun AppNavigation(
     LaunchedEffect(sessionStatus, authUiState.selectedUserType) {
         when (sessionStatus) {
             is SessionStatus.Authenticated -> {
-                // Only navigate to home if user has selected a type
-                if (authUiState.selectedUserType != null) {
+                // Only navigate if user has selected a type
+                authUiState.selectedUserType?.let { userType ->
                     if (navController.currentDestination?.route == Screen.Auth.route) {
-                        navController.navigate(Screen.Home.route) {
+                        val route = getHomeRouteForUserType(userType)
+                        navController.navigate(route) {
                             popUpTo(Screen.Auth.route) { inclusive = true }
                         }
                     }
@@ -80,5 +159,14 @@ fun AppNavigation(
             }
             else -> { /* Loading state, do nothing */ }
         }
+    }
+}
+
+private fun getHomeRouteForUserType(userType: UserType?): String {
+    return when (userType) {
+        UserType.PRODUCER -> Screen.ProducerHome.route
+        UserType.SHOP -> Screen.ShopHome.route
+        UserType.SHOPPER -> Screen.ShopperHome.route
+        null -> Screen.Home.route
     }
 }

@@ -98,19 +98,83 @@ app/src/main/java/com/indelo/goods/
 
 ## Database Schema
 
-### Products
+### Products (for canned food/beverage producers)
 ```sql
 CREATE TABLE products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+    -- Basic Info
     name TEXT NOT NULL,
+    brand TEXT,
     description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    quantity INTEGER DEFAULT 0,
+    short_description TEXT,
+
+    -- Pricing
+    wholesale_price DECIMAL(10,2) NOT NULL,  -- Price for shops
+    retail_price DECIMAL(10,2),               -- Suggested retail price
+    currency TEXT DEFAULT 'USD',
+
+    -- Product Specifications
+    volume_ml INTEGER,                        -- Volume in milliliters
+    weight_g INTEGER,                         -- Weight in grams
+    serving_size TEXT,                        -- e.g., "240ml", "1 can"
+    servings_per_container INTEGER,
+
+    -- Packaging
+    units_per_case INTEGER DEFAULT 1,
+    case_dimensions TEXT,                     -- e.g., "12x8x6 inches"
+    case_weight_kg DECIMAL(6,2),
+
+    -- Ingredients & Nutrition
+    ingredients TEXT,
+    nutrition_facts JSONB,                    -- Stored as JSON object
+    allergens TEXT,                           -- e.g., "Contains: Soy, Wheat"
+
+    -- Certifications
+    is_organic BOOLEAN DEFAULT FALSE,
+    is_non_gmo BOOLEAN DEFAULT FALSE,
+    is_vegan BOOLEAN DEFAULT FALSE,
+    is_gluten_free BOOLEAN DEFAULT FALSE,
+    is_kosher BOOLEAN DEFAULT FALSE,
+    other_certifications TEXT,
+
+    -- Inventory & Ordering
+    sku TEXT,                                 -- Stock Keeping Unit
+    upc TEXT,                                 -- Universal Product Code (barcode)
+    minimum_order_quantity INTEGER DEFAULT 1,
+    lead_time_days INTEGER,
+    in_stock BOOLEAN DEFAULT TRUE,
+    stock_quantity INTEGER,
+
+    -- Media
     image_url TEXT,
+    additional_images TEXT[],                 -- Array of image URLs
+
+    -- Categorization
     category_id UUID REFERENCES categories(id),
+    tags TEXT[],                              -- e.g., ["beverage", "sparkling"]
+
+    -- Producer Info
+    producer_id UUID REFERENCES auth.users(id),
+    country_of_origin TEXT,
+    shelf_life_days INTEGER,
+    storage_instructions TEXT,
+
+    -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Enable RLS
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+-- Producers can manage their own products
+CREATE POLICY "Producers can CRUD own products" ON products
+    FOR ALL USING (auth.uid() = producer_id);
+
+-- Everyone can view products
+CREATE POLICY "Products are viewable by everyone" ON products
+    FOR SELECT USING (true);
 ```
 
 ### Categories
@@ -119,8 +183,27 @@ CREATE TABLE categories (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
+    parent_id UUID REFERENCES categories(id),
+    image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Seed categories for canned food/beverages
+INSERT INTO categories (name) VALUES
+    ('Canned Vegetables'),
+    ('Canned Fruits'),
+    ('Canned Beans & Legumes'),
+    ('Soups & Broths'),
+    ('Canned Meats & Seafood'),
+    ('Sauces & Condiments'),
+    ('Sodas & Soft Drinks'),
+    ('Juices'),
+    ('Energy Drinks'),
+    ('Sparkling Water'),
+    ('Ready-to-Drink Tea & Coffee'),
+    ('Craft Beverages'),
+    ('Pickled & Fermented'),
+    ('Other');
 ```
 
 ## Requirements
@@ -132,14 +215,20 @@ CREATE TABLE categories (
 - [ ] Email/password (fallback, future)
 - [ ] OAuth providers (future)
 
-### Product Management
-- [ ] List products
+### Product Management (Producer)
+- [ ] Create product with full details (basic info, pricing, specs, certifications)
+- [ ] Multi-step product creation form
+- [ ] Edit existing products
+- [ ] Delete products
+- [ ] View product list (own products)
+- [ ] Image upload for products
+
+### Product Discovery (Shop & Shopper)
+- [ ] Browse all products
 - [ ] View product details
-- [ ] Add new product
-- [ ] Edit product
-- [ ] Delete product
 - [ ] Search products
 - [ ] Filter by category
+- [ ] Filter by certifications (organic, vegan, etc.)
 
 ### Categories
 - [ ] List categories
