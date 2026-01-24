@@ -62,6 +62,27 @@ app/src/main/java/com/indelo/goods/
 └── MainScreen.kt
 ```
 
+## Project Documentation
+
+### FORtomas.md
+
+For every project, write a detailed **FORtomas.md** file that explains the whole project in plain language.
+
+This file should cover:
+
+- **Technical architecture** - How is everything structured? What's the big picture?
+- **Codebase structure** - How are the various parts connected? What talks to what?
+- **Technologies used** - What tools, frameworks, and libraries power this thing?
+- **Technical decisions** - Why did we choose X over Y? What trade-offs did we make?
+- **Lessons learned** - This is the gold:
+  - Bugs we ran into and how we fixed them
+  - Potential pitfalls and how to avoid them in the future
+  - New technologies we explored
+  - How good engineers think and work
+  - Best practices we discovered along the way
+
+**Writing style:** Make it engaging to read! Don't write boring technical documentation that reads like a textbook. Use analogies and anecdotes where appropriate to make concepts more understandable and memorable. Think of it as explaining the project to a smart colleague over coffee, not writing an API reference.
+
 ## Coding Practices
 
 ### General
