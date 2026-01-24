@@ -3,6 +3,7 @@ package com.indelo.goods.data.repository
 import com.indelo.goods.data.supabase.SupabaseClientProvider
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.Phone
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,36 @@ class AuthRepository {
     val currentUserEmail: String?
         get() = auth.currentUserOrNull()?.email
 
+    val currentUserPhone: String?
+        get() = auth.currentUserOrNull()?.phone
+
+    // Phone OTP - Send code
+    suspend fun sendOtp(phone: String): Result<Unit> {
+        return try {
+            auth.signInWith(Phone) {
+                this.phone = phone
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Phone OTP - Verify code
+    suspend fun verifyOtp(phone: String, token: String): Result<Unit> {
+        return try {
+            auth.verifyPhoneOtp(
+                type = Phone.OtpType.SMS,
+                phone = phone,
+                token = token
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Email/password sign up (fallback)
     suspend fun signUp(email: String, password: String): Result<Unit> {
         return try {
             auth.signUpWith(Email) {
@@ -35,6 +66,7 @@ class AuthRepository {
         }
     }
 
+    // Email/password sign in (fallback)
     suspend fun signIn(email: String, password: String): Result<Unit> {
         return try {
             auth.signInWith(Email) {

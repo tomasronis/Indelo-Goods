@@ -2,6 +2,7 @@ package com.indelo.goods.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.indelo.goods.data.model.UserType
 import com.indelo.goods.data.repository.AuthRepository
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,11 +10,22 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+enum class AuthStep {
+    PHONE_ENTRY,
+    OTP_VERIFICATION,
+    USER_TYPE_SELECTION
+}
 
 data class AuthUiState(
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val step: AuthStep = AuthStep.PHONE_ENTRY,
+    val phone: String = "",
+    val otpSent: Boolean = false,
+    val selectedUserType: UserType? = null
 )
 
 class AuthViewModel(
@@ -37,51 +49,109 @@ class AuthViewModel(
             initialValue = false
         )
 
+    fun sendOtp(phone: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, phone = phone) }
+            val result = authRepository.sendOtp(phone)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        isLoading = false,
+                        otpSent = true,
+                        step = AuthStep.OTP_VERIFICATION,
+                        error = null
+                    )
+                } else {
+                    it.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to send code"
+                    )
+                }
+            }
+        }
+    }
+
+    fun verifyOtp(token: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = authRepository.verifyOtp(_uiState.value.phone, token)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        isLoading = false,
+                        step = AuthStep.USER_TYPE_SELECTION,
+                        error = null
+                    )
+                } else {
+                    it.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message ?: "Invalid code"
+                    )
+                }
+            }
+        }
+    }
+
+    fun selectUserType(userType: UserType) {
+        _uiState.update { it.copy(selectedUserType = userType) }
+        // TODO: Save user type to profile in Supabase
+    }
+
+    fun goBack() {
+        _uiState.update {
+            when (it.step) {
+                AuthStep.OTP_VERIFICATION -> it.copy(step = AuthStep.PHONE_ENTRY, otpSent = false)
+                AuthStep.USER_TYPE_SELECTION -> it.copy(step = AuthStep.OTP_VERIFICATION)
+                else -> it
+            }
+        }
+    }
+
+    // Legacy email/password methods (kept for fallback)
     fun signUp(email: String, password: String) {
         viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             val result = authRepository.signUp(email, password)
-            _uiState.value = AuthUiState(
-                isLoading = false,
-                error = result.exceptionOrNull()?.message
-            )
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message
+                )
+            }
         }
     }
 
     fun signIn(email: String, password: String) {
         viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             val result = authRepository.signIn(email, password)
-            _uiState.value = AuthUiState(
-                isLoading = false,
-                error = result.exceptionOrNull()?.message
-            )
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message
+                )
+            }
         }
     }
 
     fun signOut() {
         viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             val result = authRepository.signOut()
-            _uiState.value = AuthUiState(
-                isLoading = false,
-                error = result.exceptionOrNull()?.message
-            )
-        }
-    }
-
-    fun resetPassword(email: String) {
-        viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
-            val result = authRepository.resetPassword(email)
-            _uiState.value = AuthUiState(
-                isLoading = false,
-                error = result.exceptionOrNull()?.message
-            )
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    step = AuthStep.PHONE_ENTRY,
+                    phone = "",
+                    otpSent = false,
+                    selectedUserType = null,
+                    error = result.exceptionOrNull()?.message
+                )
+            }
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.update { it.copy(error = null) }
     }
 }

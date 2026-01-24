@@ -1,6 +1,7 @@
 package com.indelo.goods.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -11,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.indelo.goods.MainScreen
 import com.indelo.goods.ui.auth.AuthScreen
+import com.indelo.goods.ui.auth.AuthStep
 import com.indelo.goods.ui.auth.AuthViewModel
 import io.github.jan.supabase.auth.status.SessionStatus
 
@@ -41,8 +43,10 @@ fun AppNavigation(
         composable(Screen.Auth.route) {
             AuthScreen(
                 uiState = authUiState,
-                onSignIn = { email, password -> authViewModel.signIn(email, password) },
-                onSignUp = { email, password -> authViewModel.signUp(email, password) },
+                onSendOtp = { phone -> authViewModel.sendOtp(phone) },
+                onVerifyOtp = { token -> authViewModel.verifyOtp(token) },
+                onSelectUserType = { userType -> authViewModel.selectUserType(userType) },
+                onGoBack = { authViewModel.goBack() },
                 onClearError = { authViewModel.clearError() }
             )
         }
@@ -54,22 +58,27 @@ fun AppNavigation(
         }
     }
 
-    // Handle navigation based on auth state changes
-    when (sessionStatus) {
-        is SessionStatus.Authenticated -> {
-            if (navController.currentDestination?.route == Screen.Auth.route) {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Auth.route) { inclusive = true }
+    // Handle navigation based on auth state and user type selection
+    LaunchedEffect(sessionStatus, authUiState.selectedUserType) {
+        when (sessionStatus) {
+            is SessionStatus.Authenticated -> {
+                // Only navigate to home if user has selected a type
+                if (authUiState.selectedUserType != null) {
+                    if (navController.currentDestination?.route == Screen.Auth.route) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Auth.route) { inclusive = true }
+                        }
+                    }
                 }
             }
-        }
-        is SessionStatus.NotAuthenticated -> {
-            if (navController.currentDestination?.route != Screen.Auth.route) {
-                navController.navigate(Screen.Auth.route) {
-                    popUpTo(0) { inclusive = true }
+            is SessionStatus.NotAuthenticated -> {
+                if (navController.currentDestination?.route != Screen.Auth.route) {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             }
+            else -> { /* Loading state, do nothing */ }
         }
-        else -> { /* Loading state, do nothing */ }
     }
 }

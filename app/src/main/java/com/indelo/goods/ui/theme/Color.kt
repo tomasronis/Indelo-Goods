@@ -2,33 +2,45 @@ package com.indelo.goods.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary colors
-val Primary = Color(0xFF1976D2)
-val PrimaryLight = Color(0xFF63A4FF)
-val PrimaryDark = Color(0xFF004BA0)
+// Retro Hotdog Palette - 4 core colors
+val Mustard = Color(0xFFFFD93D)          // Bright mustard yellow
+val Ketchup = Color(0xFFFF6B6B)          // Soft red
+val Bun = Color(0xFFFFF5E1)              // Cream/off-white
+val Charcoal = Color(0xFF2D2D2D)         // Dark charcoal
 
-// Secondary colors
-val Secondary = Color(0xFF26A69A)
-val SecondaryLight = Color(0xFF64D8CB)
-val SecondaryDark = Color(0xFF00766C)
+// Extended palette for UI needs
+val MustardDark = Color(0xFFE5C235)
+val MustardLight = Color(0xFFFFE566)
+val KetchupDark = Color(0xFFE55555)
+val KetchupLight = Color(0xFFFF8A8A)
 
 // Background colors
-val BackgroundLight = Color(0xFFFAFAFA)
-val BackgroundDark = Color(0xFF121212)
+val BackgroundLight = Bun
+val BackgroundDark = Color(0xFF1A1A1A)
 
 // Surface colors
 val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceDark = Color(0xFF1E1E1E)
+val SurfaceDark = Color(0xFF2D2D2D)
+
+// Primary = Mustard (main brand color)
+val Primary = Mustard
+val PrimaryLight = MustardLight
+val PrimaryDark = MustardDark
+
+// Secondary = Ketchup (accent)
+val Secondary = Ketchup
+val SecondaryLight = KetchupLight
+val SecondaryDark = KetchupDark
 
 // On colors (text/icons on colored backgrounds)
-val OnPrimary = Color(0xFFFFFFFF)
+val OnPrimary = Charcoal
 val OnSecondary = Color(0xFFFFFFFF)
-val OnBackgroundLight = Color(0xFF1C1B1F)
-val OnBackgroundDark = Color(0xFFE6E1E5)
-val OnSurfaceLight = Color(0xFF1C1B1F)
-val OnSurfaceDark = Color(0xFFE6E1E5)
+val OnBackgroundLight = Charcoal
+val OnBackgroundDark = Bun
+val OnSurfaceLight = Charcoal
+val OnSurfaceDark = Bun
 
 // Error colors
-val Error = Color(0xFFB00020)
-val ErrorDark = Color(0xFFCF6679)
+val Error = Color(0xFFFF4444)
+val ErrorDark = Color(0xFFFF6B6B)
 val OnError = Color(0xFFFFFFFF)

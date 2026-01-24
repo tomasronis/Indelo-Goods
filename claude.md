@@ -4,6 +4,29 @@
 
 Indelo Goods is a goods/inventory management application. The first version targets Android, with iOS planned for a later phase.
 
+## User Types
+
+Three distinct user roles:
+
+| Type | Description |
+|------|-------------|
+| **Shop** | Retail stores that sell goods to shoppers |
+| **Shopper** | Consumers who browse and purchase goods |
+| **Producer** | Manufacturers/suppliers who provide goods to shops |
+
+## Design System
+
+### Visual Style
+- **Aesthetic:** Retro/pixelated old-school look
+- **Colors:** Simple 2-4 color palette
+- **Mascot:** Dancing hotdog (used on auth screens)
+- **Typography:** Clean, readable (pixel fonts optional for accents)
+
+### Auth UX Goals
+- Super slick and easy sign-up/login
+- Phone-based OTP for speed and simplicity
+- Minimal friction to get users started
+
 ## Tech Stack
 
 ### Android (v1)
@@ -103,10 +126,10 @@ CREATE TABLE categories (
 ## Requirements
 
 ### Authentication
-- [ ] Email/password sign up
-- [ ] Email/password sign in
+- [ ] Phone number OTP sign up/sign in (primary)
+- [ ] User type selection (Shop, Shopper, Producer)
 - [ ] Sign out
-- [ ] Password reset (future)
+- [ ] Email/password (fallback, future)
 - [ ] OAuth providers (future)
 
 ### Product Management
