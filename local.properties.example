@@ -1,0 +1,11 @@
+# Local configuration template
+# Copy this file to local.properties and fill in your values
+# DO NOT commit local.properties to version control
+
+# Android SDK location (usually set automatically by Android Studio)
+# sdk.dir=/path/to/android/sdk
+
+# Supabase credentials
+# Get these from your Supabase project: Settings > API
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key

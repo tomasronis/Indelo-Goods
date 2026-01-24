@@ -33,14 +33,20 @@ cd Indelo-Goods
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Get your project URL and anon key from Settings > API
-3. Update `app/src/main/java/com/indelo/goods/data/supabase/SupabaseConfig.kt`:
+3. Copy `local.properties.example` to `local.properties`:
 
-```kotlin
-object SupabaseConfig {
-    const val SUPABASE_URL = "https://your-project.supabase.co"
-    const val SUPABASE_ANON_KEY = "your-anon-key"
-}
+```bash
+cp local.properties.example local.properties
 ```
+
+4. Edit `local.properties` with your Supabase credentials:
+
+```properties
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
+
+> **Note:** `local.properties` is gitignored and should never be committed to version control.
 
 ### Database Setup
 
