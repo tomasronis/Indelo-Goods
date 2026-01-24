@@ -49,6 +49,27 @@ class AuthViewModel(
             initialValue = false
         )
 
+    init {
+        // Load user type when authenticated
+        viewModelScope.launch {
+            sessionStatus.collect { status ->
+                if (status is SessionStatus.Authenticated) {
+                    loadUserType()
+                }
+            }
+        }
+    }
+
+    private fun loadUserType() {
+        viewModelScope.launch {
+            val result = authRepository.getUserType()
+            if (result.isSuccess) {
+                val userType = result.getOrNull()
+                _uiState.update { it.copy(selectedUserType = userType) }
+            }
+        }
+    }
+
     fun sendOtp(phone: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, phone = phone) }
@@ -93,8 +114,16 @@ class AuthViewModel(
     }
 
     fun selectUserType(userType: UserType) {
-        _uiState.update { it.copy(selectedUserType = userType) }
-        // TODO: Save user type to profile in Supabase
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, selectedUserType = userType) }
+            val result = authRepository.saveUserType(userType)
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message
+                )
+            }
+        }
     }
 
     fun goBack() {

@@ -145,6 +145,17 @@ data class Category(
     val createdAt: String? = null
 )
 
+@Serializable
+data class UserProfile(
+    val id: String,
+    @SerialName("user_type")
+    val userType: String,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
+)
+
 // Predefined categories for canned food/beverages
 object ProductCategories {
     val CANNED_VEGETABLES = "Canned Vegetables"

@@ -1,5 +1,6 @@
 package com.indelo.goods.ui.producer
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,12 +40,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.indelo.goods.data.model.Product
 import com.indelo.goods.ui.components.DancingHotdog
 import com.indelo.goods.ui.theme.Bun
@@ -217,7 +220,7 @@ private fun ProductCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product image placeholder
+            // Product image
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -225,12 +228,21 @@ private fun ProductCard(
                     .background(Mustard.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = product.name.take(2).uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Charcoal
-                )
+                if (product.imageUrl != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(product.imageUrl),
+                        contentDescription = "Product image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = product.name.take(2).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Charcoal
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))

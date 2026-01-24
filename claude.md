@@ -227,6 +227,42 @@ INSERT INTO categories (name) VALUES
     ('Other');
 ```
 
+### User Profiles
+```sql
+CREATE TABLE user_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
+    user_type TEXT NOT NULL CHECK (user_type IN ('SHOP', 'SHOPPER', 'PRODUCER')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Users can manage their own profile
+CREATE POLICY "Users can CRUD own profile" ON user_profiles
+    FOR ALL USING (auth.uid() = id);
+```
+
+### Storage Buckets
+```sql
+-- Create storage bucket for product images
+INSERT INTO storage.buckets (id, name, public) VALUES ('products', 'products', true);
+
+-- Enable RLS on storage
+CREATE POLICY "Authenticated users can upload product images" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'products' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Anyone can view product images" ON storage.objects
+    FOR SELECT USING (bucket_id = 'products');
+
+CREATE POLICY "Users can update their own product images" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'products' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can delete their own product images" ON storage.objects
+    FOR DELETE USING (bucket_id = 'products' AND auth.uid()::text = (storage.foldername(name))[1]);
+```
+
 ## Requirements
 
 ### Authentication

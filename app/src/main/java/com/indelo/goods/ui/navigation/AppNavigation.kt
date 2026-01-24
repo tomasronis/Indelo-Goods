@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -15,9 +16,12 @@ import com.indelo.goods.data.model.UserType
 import com.indelo.goods.ui.auth.AuthScreen
 import com.indelo.goods.ui.auth.AuthViewModel
 import com.indelo.goods.ui.producer.ProductCreateScreen
+import com.indelo.goods.ui.producer.ProductEditScreen
 import com.indelo.goods.ui.producer.ProductFormState
 import com.indelo.goods.ui.producer.ProductViewModel
 import com.indelo.goods.ui.producer.ProducerHomeScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import io.github.jan.supabase.auth.status.SessionStatus
 
 sealed class Screen(val route: String) {
@@ -89,7 +93,14 @@ fun AppNavigation(
 
         // Producer screens
         composable(Screen.ProducerHome.route) {
-            val productViewModel: ProductViewModel = viewModel()
+            val context = LocalContext.current
+            val productViewModel: ProductViewModel = viewModel(
+                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
+                    context.applicationContext as android.app.Application
+                )
+            ) {
+                ProductViewModel(context)
+            }
 
             ProducerHomeScreen(
                 onSignOut = { authViewModel.signOut() },
@@ -102,7 +113,14 @@ fun AppNavigation(
         }
 
         composable(Screen.ProductCreate.route) {
-            val productViewModel: ProductViewModel = viewModel()
+            val context = LocalContext.current
+            val productViewModel: ProductViewModel = viewModel(
+                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
+                    context.applicationContext as android.app.Application
+                )
+            ) {
+                ProductViewModel(context)
+            }
             val createState by productViewModel.createState.collectAsState()
 
             LaunchedEffect(createState.isSuccess) {
@@ -114,10 +132,31 @@ fun AppNavigation(
 
             ProductCreateScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onProductCreated = { formState ->
-                    productViewModel.createProduct(formState)
+                onProductCreated = { formState, imageUri ->
+                    productViewModel.createProduct(formState, imageUri)
                 },
                 isLoading = createState.isLoading
+            )
+        }
+
+        composable(
+            route = Screen.ProductEdit.route,
+            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId") ?: return@composable
+            val context = LocalContext.current
+            val productViewModel: ProductViewModel = viewModel(
+                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
+                    context.applicationContext as android.app.Application
+                )
+            ) {
+                ProductViewModel(context)
+            }
+
+            ProductEditScreen(
+                productId = productId,
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = productViewModel
             )
         }
 

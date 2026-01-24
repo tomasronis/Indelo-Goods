@@ -1,5 +1,6 @@
 package com.indelo.goods.ui.producer
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +65,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indelo.goods.data.model.ProductCategories
+import com.indelo.goods.ui.components.ImagePicker
 import com.indelo.goods.ui.theme.Bun
 import com.indelo.goods.ui.theme.Charcoal
 import com.indelo.goods.ui.theme.IndeloGoodsTheme
@@ -123,12 +125,13 @@ enum class ProductFormStep(val title: String, val subtitle: String) {
 @Composable
 fun ProductCreateScreen(
     onNavigateBack: () -> Unit,
-    onProductCreated: (ProductFormState) -> Unit,
+    onProductCreated: (ProductFormState, Uri?) -> Unit,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var currentStep by rememberSaveable { mutableIntStateOf(0) }
     var formState by rememberSaveable { mutableStateOf(ProductFormState()) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val steps = ProductFormStep.entries
 
     Scaffold(
@@ -184,7 +187,9 @@ fun ProductCreateScreen(
                     when (steps[step]) {
                         ProductFormStep.BASIC_INFO -> BasicInfoStep(
                             formState = formState,
-                            onFormStateChange = { formState = it }
+                            onFormStateChange = { formState = it },
+                            selectedImageUri = selectedImageUri,
+                            onImageSelected = { selectedImageUri = it }
                         )
                         ProductFormStep.PRICING -> PricingStep(
                             formState = formState,
@@ -219,7 +224,7 @@ fun ProductCreateScreen(
                 },
                 onBack = { if (currentStep > 0) currentStep-- },
                 onNext = { if (currentStep < steps.size - 1) currentStep++ },
-                onSubmit = { onProductCreated(formState) }
+                onSubmit = { onProductCreated(formState, selectedImageUri) }
             )
         }
     }
@@ -353,7 +358,9 @@ private fun NavigationButtons(
 @Composable
 private fun BasicInfoStep(
     formState: ProductFormState,
-    onFormStateChange: (ProductFormState) -> Unit
+    onFormStateChange: (ProductFormState) -> Unit,
+    selectedImageUri: Uri? = null,
+    onImageSelected: ((Uri?) -> Unit)? = null
 ) {
     var categoryExpanded by remember { mutableStateOf(false) }
     val categories = listOf(
@@ -375,6 +382,14 @@ private fun BasicInfoStep(
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SectionHeader(title = "Basic Information", subtitle = "Tell us about your product")
+
+        if (onImageSelected != null) {
+            ImagePicker(
+                imageUri = selectedImageUri,
+                onImageSelected = onImageSelected,
+                label = "Product Image"
+            )
+        }
 
         FormTextField(
             value = formState.name,
@@ -886,7 +901,7 @@ fun ProductCreateScreenPreview() {
     IndeloGoodsTheme {
         ProductCreateScreen(
             onNavigateBack = {},
-            onProductCreated = { _ -> }
+            onProductCreated = { _, _ -> }
         )
     }
 }
