@@ -116,6 +116,12 @@ dependencies {
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // QR Code Generation
+    implementation("com.google.zxing:core:3.5.3")
+
+    // Stripe SDK
+    implementation("com.stripe:stripe-android:20.37.5")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
