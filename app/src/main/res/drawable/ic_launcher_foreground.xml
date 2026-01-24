@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,27
+        C68.91,27 81,39.09 81,54
+        C81,68.91 68.91,81 54,81
+        C39.09,81 27,68.91 27,54
+        C27,39.09 39.09,27 54,27Z" />
+    <!-- Letter "I" for Indelo -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M48,40h12v28h-12z" />
+    <!-- Top bar of I -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M44,38h20v6h-20z" />
+    <!-- Bottom bar of I -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M44,64h20v6h-20z" />
+</vector>
