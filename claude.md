@@ -266,45 +266,73 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 ## Requirements
 
 ### Authentication
-- [ ] Phone number OTP sign up/sign in (primary)
-- [ ] User type selection (Shop, Shopper, Producer)
-- [ ] Sign out
+- [x] Phone number OTP sign up/sign in (primary)
+- [x] User type selection (Shop, Shopper, Producer)
+- [x] User type persistence in Supabase
+- [x] Sign out
 - [ ] Email/password (fallback, future)
 - [ ] OAuth providers (future)
 
 ### Product Management (Producer)
-- [ ] Create product with full details (basic info, pricing, specs, certifications)
-- [ ] Multi-step product creation form
-- [ ] Edit existing products
-- [ ] Delete products
-- [ ] View product list (own products)
-- [ ] Image upload for products
+- [x] Create product with full details (basic info, pricing, specs, certifications)
+- [x] Multi-step product creation form (6 steps)
+- [x] Edit existing products
+- [x] Delete products
+- [x] View product list (own products)
+- [x] Image upload for products (Supabase Storage)
+- [x] QR code generation for products
+- [x] Display QR codes for shoppers to scan
 
 ### Product Discovery (Shop & Shopper)
+- [x] View product details (public, no auth required)
+- [x] Browse producer profiles
+- [x] View all products from a producer
+- [x] Deep link support (scan QR code → product page)
 - [ ] Browse all products
-- [ ] View product details
 - [ ] Search products
 - [ ] Filter by category
 - [ ] Filter by certifications (organic, vegan, etc.)
+
+### Shopping Cart & Checkout
+- [x] Shopping cart functionality (add, remove, update quantity)
+- [x] Checkout screen with cart summary
+- [ ] Stripe payment integration
+- [ ] Order management
+- [ ] Order history
+
+### Deep Links & QR Codes
+- [x] Deep link handling (`indelogoods://product/{id}`)
+- [x] Universal links support (`https://indelogoods.com/product/{id}`)
+- [x] QR code generation with ZXing
+- [x] Public product pages (accessible via QR scan)
+- [ ] Web frontend for universal links
 
 ### Categories
 - [ ] List categories
 - [ ] CRUD operations
 
 ### Future Features
-- [ ] Barcode scanning
-- [ ] Image upload for products
+- [ ] Barcode scanning (UPC/EAN)
 - [ ] Real-time inventory updates
-- [ ] Reporting/analytics
+- [ ] Reporting/analytics for producers
+- [ ] Shop B2B ordering portal
 - [ ] iOS app
+- [ ] Web app (Next.js)
 
 ## Dependencies
 
 Key dependencies and their purposes:
 - `supabase-kt` - Supabase Kotlin SDK (BOM version 2.6.1)
+  - `postgrest-kt` - Database queries
+  - `auth-kt` - Authentication
+  - `storage-kt` - File storage for product images
+  - `realtime-kt` - Real-time subscriptions (future use)
 - `ktor-client-android` - HTTP client for Supabase
-- `navigation-compose` - Jetpack Compose navigation
+- `navigation-compose` - Jetpack Compose navigation with deep link support
 - `lifecycle-viewmodel-compose` - ViewModel integration with Compose
+- `coil-compose` - Image loading and caching (v2.5.0)
+- `zxing:core` - QR code generation (v3.5.3)
+- `stripe-android` - Stripe payment SDK (v20.37.5) - for future checkout
 
 ## Testing
 

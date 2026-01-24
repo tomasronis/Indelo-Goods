@@ -16,10 +16,14 @@ import com.indelo.goods.data.model.UserType
 import com.indelo.goods.ui.auth.AuthScreen
 import com.indelo.goods.ui.auth.AuthViewModel
 import com.indelo.goods.ui.producer.ProductCreateScreen
+import com.indelo.goods.ui.cart.CartViewModel
+import com.indelo.goods.ui.cart.CheckoutScreen
 import com.indelo.goods.ui.producer.ProductEditScreen
 import com.indelo.goods.ui.producer.ProductFormState
 import com.indelo.goods.ui.producer.ProductViewModel
 import com.indelo.goods.ui.producer.ProducerHomeScreen
+import com.indelo.goods.ui.public.ProductDetailScreen
+import com.indelo.goods.ui.public.ProducerProfileScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -35,6 +39,17 @@ sealed class Screen(val route: String) {
         fun createRoute(productId: String) = "producer/product/edit/$productId"
     }
 
+    // Public screens (no auth required)
+    data object ProductDetail : Screen("product/{productId}") {
+        fun createRoute(productId: String) = "product/$productId"
+    }
+    data object ProducerProfile : Screen("producer/{producerId}") {
+        fun createRoute(producerId: String) = "producer/$producerId"
+    }
+
+    // Shopping
+    data object Checkout : Screen("checkout")
+
     // Shop screens (placeholder)
     data object ShopHome : Screen("shop/home")
 
@@ -46,10 +61,21 @@ sealed class Screen(val route: String) {
 fun AppNavigation(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    deepLinkProductId: String? = null
 ) {
     val sessionStatus by authViewModel.sessionStatus.collectAsState()
     val authUiState by authViewModel.uiState.collectAsState()
+
+    // Handle deep link navigation
+    LaunchedEffect(deepLinkProductId) {
+        if (deepLinkProductId != null) {
+            navController.navigate(Screen.ProductDetail.createRoute(deepLinkProductId)) {
+                // Clear back stack to prevent going back to auth
+                popUpTo(0) { inclusive = false }
+            }
+        }
+    }
 
     val startDestination = when (sessionStatus) {
         is SessionStatus.Authenticated -> getHomeRouteForUserType(authUiState.selectedUserType)
@@ -157,6 +183,57 @@ fun AppNavigation(
                 productId = productId,
                 onNavigateBack = { navController.popBackStack() },
                 viewModel = productViewModel
+            )
+        }
+
+        // Public Product Detail (no auth required)
+        composable(
+            route = Screen.ProductDetail.route,
+            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId") ?: return@composable
+            val cartViewModel: CartViewModel = viewModel()
+
+            ProductDetailScreen(
+                productId = productId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToProducer = { producerId ->
+                    navController.navigate(Screen.ProducerProfile.createRoute(producerId))
+                },
+                onAddToCart = { product ->
+                    cartViewModel.addToCart(product)
+                    navController.navigate(Screen.Checkout.route)
+                }
+            )
+        }
+
+        // Public Producer Profile (no auth required)
+        composable(
+            route = Screen.ProducerProfile.route,
+            arguments = listOf(navArgument("producerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val producerId = backStackEntry.arguments?.getString("producerId") ?: return@composable
+
+            ProducerProfileScreen(
+                producerId = producerId,
+                onNavigateBack = { navController.popBackStack() },
+                onProductClick = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
+                }
+            )
+        }
+
+        // Checkout / Shopping Cart
+        composable(Screen.Checkout.route) {
+            val cartViewModel: CartViewModel = viewModel()
+
+            CheckoutScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onCheckout = {
+                    // TODO: Implement Stripe checkout
+                    // For now, just show a placeholder
+                },
+                viewModel = cartViewModel
             )
         }
 

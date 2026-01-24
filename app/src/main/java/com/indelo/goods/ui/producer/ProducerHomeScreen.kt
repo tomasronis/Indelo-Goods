@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +37,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.indelo.goods.data.model.Product
 import com.indelo.goods.ui.components.DancingHotdog
+import com.indelo.goods.ui.components.QrCodeDialog
 import com.indelo.goods.ui.theme.Bun
 import com.indelo.goods.ui.theme.Charcoal
 import com.indelo.goods.ui.theme.IndeloGoodsTheme
@@ -209,6 +214,8 @@ private fun ProductCard(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var showQrDialog by remember { mutableStateOf(false) }
+
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -295,6 +302,15 @@ private fun ProductCard(
                 }
             }
 
+            // QR Code Button
+            IconButton(onClick = { showQrDialog = true }) {
+                Icon(
+                    imageVector = Icons.Default.QrCode2,
+                    contentDescription = "Show QR Code",
+                    tint = Mustard
+                )
+            }
+
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -303,6 +319,15 @@ private fun ProductCard(
                 )
             }
         }
+    }
+
+    // QR Code Dialog
+    if (showQrDialog && product.id != null) {
+        QrCodeDialog(
+            productId = product.id,
+            productName = product.name,
+            onDismiss = { showQrDialog = false }
+        )
     }
 }
 

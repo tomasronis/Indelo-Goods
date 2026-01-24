@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.indelo.goods.data.model.Product
+import com.indelo.goods.ui.components.DancingHotdog
 import com.indelo.goods.ui.producer.ProductViewModel
 import com.indelo.goods.ui.theme.Bun
 import com.indelo.goods.ui.theme.Charcoal
@@ -114,16 +115,28 @@ fun ProductDetailScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        // Dancing hotdog easter egg for errors!
+                        DancingHotdog(
+                            modifier = Modifier.size(120.dp),
+                            pixelSize = 5f
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = "Product not found",
                             color = Ketchup,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = editState.error ?: "Unknown error",
-                            color = Charcoal,
-                            style = MaterialTheme.typography.bodyMedium
+                            color = Charcoal.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
