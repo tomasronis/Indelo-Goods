@@ -23,3 +23,22 @@
 # Keep Compose classes
 -keep class androidx.compose.** { *; }
 -keepclassmembers class androidx.compose.** { *; }
+
+# Supabase / Ktor
+-keep class io.github.jan.supabase.** { *; }
+-keep class io.ktor.** { *; }
+
+# Kotlinx Serialization
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.AnnotationsKt
+
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class kotlinx.serialization.json.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep data model classes for serialization
+-keep class com.indelo.goods.data.model.** { *; }
+-keepclassmembers class com.indelo.goods.data.model.** { *; }

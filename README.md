@@ -8,12 +8,16 @@ Android application for Indelo Goods.
 - JDK 17
 - Android SDK 34 (API Level 34)
 - Minimum SDK: 26 (Android 8.0 Oreo)
+- Supabase project (for backend)
 
 ## Tech Stack
 
 - **Language**: Kotlin
 - **UI**: Jetpack Compose with Material 3
-- **Architecture**: Modern Android architecture
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
+- **Networking**: Ktor client
+- **Serialization**: Kotlinx Serialization
+- **Architecture**: MVVM with Repository pattern
 - **Build System**: Gradle with Kotlin DSL
 
 ## Getting Started
@@ -23,6 +27,54 @@ Android application for Indelo Goods.
 ```bash
 git clone https://github.com/tomasronis/Indelo-Goods.git
 cd Indelo-Goods
+```
+
+### Configure Supabase
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Get your project URL and anon key from Settings > API
+3. Update `app/src/main/java/com/indelo/goods/data/supabase/SupabaseConfig.kt`:
+
+```kotlin
+object SupabaseConfig {
+    const val SUPABASE_URL = "https://your-project.supabase.co"
+    const val SUPABASE_ANON_KEY = "your-anon-key"
+}
+```
+
+### Database Setup
+
+Create the following table in your Supabase SQL Editor:
+
+```sql
+-- Products table
+CREATE TABLE products (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INTEGER DEFAULT 0,
+    image_url TEXT,
+    category_id UUID REFERENCES categories(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Categories table (optional)
+CREATE TABLE categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+-- Create policies (adjust as needed for your use case)
+CREATE POLICY "Allow read access to all users" ON products FOR SELECT USING (true);
+CREATE POLICY "Allow read access to all users" ON categories FOR SELECT USING (true);
 ```
 
 ### Build the Project
@@ -49,20 +101,34 @@ Indelo-Goods/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/indelo/goods/
-│   │   │   │   ├── ui/theme/          # Compose theming
+│   │   │   │   ├── data/
+│   │   │   │   │   ├── model/           # Data models
+│   │   │   │   │   ├── repository/      # Repositories
+│   │   │   │   │   └── supabase/        # Supabase client
+│   │   │   │   ├── ui/
+│   │   │   │   │   ├── auth/            # Authentication screens
+│   │   │   │   │   ├── navigation/      # Navigation
+│   │   │   │   │   └── theme/           # Compose theming
 │   │   │   │   ├── IndeloGoodsApplication.kt
 │   │   │   │   ├── MainActivity.kt
 │   │   │   │   └── MainScreen.kt
-│   │   │   ├── res/                   # Resources
+│   │   │   ├── res/                     # Resources
 │   │   │   └── AndroidManifest.xml
-│   │   ├── test/                      # Unit tests
-│   │   └── androidTest/               # Instrumentation tests
+│   │   ├── test/                        # Unit tests
+│   │   └── androidTest/                 # Instrumentation tests
 │   └── build.gradle.kts
 ├── gradle/
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── gradle.properties
 ```
+
+## Features
+
+- User authentication (sign up, sign in, sign out)
+- Product management (CRUD operations)
+- Real-time updates support
+- Light/dark theme
 
 ## Building for Release
 
