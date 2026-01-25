@@ -73,6 +73,9 @@ fun ProducerHomeScreen(
     onCreateProduct: () -> Unit,
     onProductClick: (String) -> Unit,
     onViewOrders: () -> Unit = {},
+    onViewSales: () -> Unit = {},
+    onViewInventory: () -> Unit = {},
+    onViewPayouts: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProductViewModel = viewModel()
 ) {
@@ -144,7 +147,12 @@ fun ProducerHomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        QuickActionsSection(onViewOrders = onViewOrders)
+                        QuickActionsSection(
+                            onViewOrders = onViewOrders,
+                            onViewSales = onViewSales,
+                            onViewInventory = onViewInventory,
+                            onViewPayouts = onViewPayouts
+                        )
                     }
 
                     item {
@@ -230,7 +238,10 @@ private fun EmptyProductsState(
 
 @Composable
 private fun QuickActionsSection(
-    onViewOrders: () -> Unit
+    onViewOrders: () -> Unit,
+    onViewSales: () -> Unit,
+    onViewInventory: () -> Unit,
+    onViewPayouts: () -> Unit
 ) {
     Column {
         Text(
@@ -255,9 +266,8 @@ private fun QuickActionsSection(
             QuickActionCard(
                 icon = Icons.Default.BarChart,
                 label = "Sales",
-                onClick = { /* Coming soon */ },
-                modifier = Modifier.weight(1f),
-                enabled = false
+                onClick = onViewSales,
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -270,17 +280,15 @@ private fun QuickActionsSection(
             QuickActionCard(
                 icon = Icons.Default.Inventory,
                 label = "Inventory",
-                onClick = { /* Coming soon */ },
-                modifier = Modifier.weight(1f),
-                enabled = false
+                onClick = onViewInventory,
+                modifier = Modifier.weight(1f)
             )
 
             QuickActionCard(
                 icon = Icons.Default.AccountBalanceWallet,
                 label = "Payouts",
-                onClick = { /* Coming soon */ },
-                modifier = Modifier.weight(1f),
-                enabled = false
+                onClick = onViewPayouts,
+                modifier = Modifier.weight(1f)
             )
         }
     }

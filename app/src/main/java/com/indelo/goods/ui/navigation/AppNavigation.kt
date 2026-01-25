@@ -23,6 +23,10 @@ import com.indelo.goods.ui.producer.ProductFormState
 import com.indelo.goods.ui.producer.ProductViewModel
 import com.indelo.goods.ui.producer.ProducerHomeScreen
 import com.indelo.goods.ui.producer.ProducerOrdersScreen
+import com.indelo.goods.ui.producer.ProducerSalesScreen
+import com.indelo.goods.ui.producer.ProducerInventoryScreen
+import com.indelo.goods.ui.producer.ProducerPayoutsScreen
+import com.indelo.goods.ui.producer.ProducerSubscriptionScreen
 import com.indelo.goods.ui.public.ProductDetailScreen
 import com.indelo.goods.ui.public.ProducerProfileScreen
 import com.indelo.goods.ui.shop.OrderViewModel
@@ -43,6 +47,10 @@ sealed class Screen(val route: String) {
     // Producer screens
     data object ProducerHome : Screen("producer/home")
     data object ProducerOrders : Screen("producer/orders")
+    data object ProducerSales : Screen("producer/sales")
+    data object ProducerInventory : Screen("producer/inventory")
+    data object ProducerPayouts : Screen("producer/payouts")
+    data object ProducerSubscription : Screen("producer/subscription")
     data object ProductCreate : Screen("producer/product/create")
     data object ProductEdit : Screen("producer/product/edit/{productId}") {
         fun createRoute(productId: String) = "producer/product/edit/$productId"
@@ -151,12 +159,39 @@ fun AppNavigation(
                     navController.navigate(Screen.ProductEdit.createRoute(productId))
                 },
                 onViewOrders = { navController.navigate(Screen.ProducerOrders.route) },
+                onViewSales = { navController.navigate(Screen.ProducerSales.route) },
+                onViewInventory = { navController.navigate(Screen.ProducerInventory.route) },
+                onViewPayouts = { navController.navigate(Screen.ProducerPayouts.route) },
                 viewModel = productViewModel
             )
         }
 
         composable(Screen.ProducerOrders.route) {
             ProducerOrdersScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ProducerSales.route) {
+            ProducerSalesScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ProducerInventory.route) {
+            ProducerInventoryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ProducerPayouts.route) {
+            ProducerPayoutsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ProducerSubscription.route) {
+            ProducerSubscriptionScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -479,13 +479,19 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [x] Mark orders as shipped
 - [x] Mark orders as delivered
 - [x] Status badges (pending, confirmed, shipped, delivered, cancelled)
-- [x] Quick actions dashboard on producer home
+- [x] Quick actions dashboard on producer home (all cards now functional)
 - [x] Dancing hotdog empty state
-- [ ] Inventory tracking at shops
-- [ ] Sales analytics (units sold, revenue by shop, aggregate)
-- [ ] Payout history and tracking
-- [ ] Subscription management ($50/month)
-- [ ] Payment method management
+
+### Producer Dashboard & Analytics
+- [x] Inventory tracking screen (placeholder - ready for implementation)
+- [x] Sales analytics screen (placeholder - ready for implementation)
+- [x] Payout history screen (placeholder - ready for Stripe Connect)
+- [x] Subscription management screen (placeholder - ready for Stripe billing)
+- [x] Navigation from producer home to all dashboard features
+- [ ] Implement inventory tracking (count delivered orders by shop)
+- [ ] Implement sales analytics (integrate with shopper purchase data)
+- [ ] Implement Stripe Connect for payouts
+- [ ] Implement Stripe subscription billing ($50/month)
 
 ### Categories
 - [ ] List categories
