@@ -512,7 +512,7 @@ private fun OrderSummary(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "By placing this order, you confirm the delivery address and order details are accurate. The producer will review and confirm your order. Payment terms and invoicing will be arranged separately.",
+                text = "By placing this order, you confirm the delivery address and order details. The producer will review your order and arrange delivery. No payment required - you'll earn 4.5% of each sale when shoppers scan your QR codes!",
                 style = MaterialTheme.typography.bodySmall,
                 color = Charcoal.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,

@@ -2,7 +2,27 @@
 
 ## Overview
 
-Indelo Goods is a goods/inventory management application. The first version targets Android, with iOS planned for a later phase.
+Indelo Goods is a goods/inventory management application connecting Producers, Shops, and Shoppers through QR code-based commerce. The first version targets Android, with iOS planned for a later phase.
+
+### Business Model
+
+**Revenue Flow:**
+1. **Shoppers** (consumers) scan QR codes on products in physical shops → purchase via Stripe
+2. **Payment Split** on each sale:
+   - 4.5% → Shop (where QR code was scanned)
+   - 5.5% → Indelo Goods (platform fee)
+   - 90% → Producer (product manufacturer)
+
+**B2B Wholesale Orders:**
+- Shops order inventory from Producers **at no cost** (consignment model)
+- Shops only make money when their customers scan QR codes and purchase
+- Producers review and fulfill wholesale orders, shipping products to shops
+
+**Account Requirements:**
+- **Shops**: Bank account via Stripe Connect to receive 4.5% payouts
+- **Producers**:
+  - Bank account via Stripe Connect to receive 90% payouts
+  - Credit card for $50/month SaaS subscription fee
 
 ## User Types
 
@@ -457,12 +477,19 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [ ] List categories
 - [ ] CRUD operations
 
+### Stripe Connect & Payments
+- [ ] Stripe checkout for shoppers (QR code purchases)
+- [ ] Stripe Connect account setup for Shops (receive 4.5% payouts)
+- [ ] Stripe Connect account setup for Producers (receive 90% payouts)
+- [ ] Producer subscription billing ($50/month via saved card)
+- [ ] Payment split implementation (4.5% Shop, 5.5% Indelo, 90% Producer)
+- [ ] Payout management and tracking
+
 ### Future Features
 - [ ] Barcode scanning (UPC/EAN)
 - [ ] Real-time inventory updates
 - [ ] Reporting/analytics for producers
 - [ ] Producer order management dashboard
-- [ ] Invoice generation for B2B orders
 - [ ] iOS app
 - [ ] Web app (Next.js)
 
