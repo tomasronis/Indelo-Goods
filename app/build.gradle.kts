@@ -17,12 +17,12 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.indelo.goods"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.indelo.goods"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
@@ -98,7 +98,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // Supabase
-    implementation(platform("io.github.jan-tennert.supabase:bom:2.6.1"))
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.3.0"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")

@@ -49,7 +49,6 @@ class AuthRepository {
     suspend fun verifyOtp(phone: String, token: String): Result<Unit> {
         return try {
             auth.verifyPhoneOtp(
-                type = Phone.OtpType.SMS,
                 phone = phone,
                 token = token
             )
