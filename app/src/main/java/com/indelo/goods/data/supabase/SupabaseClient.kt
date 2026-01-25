@@ -37,7 +37,7 @@ object SupabaseClientProvider {
         .build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl(SupabaseConfig.SUPABASE_URL)
+        .baseUrl(SupabaseConfig.SUPABASE_URL.let { if (it.endsWith("/")) it else "$it/" })
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()

@@ -42,7 +42,8 @@ class AuthRepository {
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to send OTP: ${response.message()}"))
+                val errorBody = response.errorBody()?.string() ?: response.message()
+                Result.failure(Exception("Failed to send OTP: $errorBody"))
             }
         } catch (e: Exception) {
             Result.failure(e)
