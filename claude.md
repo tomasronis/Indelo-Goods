@@ -466,12 +466,26 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [x] Add products to wholesale order cart
 - [x] Adjust order quantities (case units)
 - [x] View order summary with total
-- [x] Place B2B wholesale orders
+- [x] Place B2B wholesale orders (free inventory - consignment model)
+- [x] Delivery address confirmation
 - [x] Dancing hotdog Easter eggs throughout shop UI
 - [ ] View order history
 - [ ] Track order status
-- [ ] Producer order management (accept/reject)
-- [ ] Order fulfillment workflow
+
+### Producer Order Management
+- [x] View incoming orders from shops
+- [x] Order details (items, quantities, delivery address, notes)
+- [x] Accept/confirm orders
+- [x] Mark orders as shipped
+- [x] Mark orders as delivered
+- [x] Status badges (pending, confirmed, shipped, delivered, cancelled)
+- [x] Quick actions dashboard on producer home
+- [x] Dancing hotdog empty state
+- [ ] Inventory tracking at shops
+- [ ] Sales analytics (units sold, revenue by shop, aggregate)
+- [ ] Payout history and tracking
+- [ ] Subscription management ($50/month)
+- [ ] Payment method management
 
 ### Categories
 - [ ] List categories

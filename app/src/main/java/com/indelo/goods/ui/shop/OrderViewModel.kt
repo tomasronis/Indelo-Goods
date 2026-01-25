@@ -157,9 +157,13 @@ class OrderViewModel(
 
             _state.update { it.copy(isPlacingOrder = true, error = null) }
 
+            // Get producer_id from first product (assuming all products in order are from same producer)
+            val producerId = currentState.items.firstOrNull()?.product?.producerId
+
             // Create the order
             val order = Order(
                 shopId = shopId,
+                producerId = producerId,
                 totalAmount = currentState.totalAmount,
                 status = "pending",
                 shippingAddress = currentState.deliveryAddress,

@@ -22,6 +22,11 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,6 +72,7 @@ fun ProducerHomeScreen(
     onSignOut: () -> Unit,
     onCreateProduct: () -> Unit,
     onProductClick: (String) -> Unit,
+    onViewOrders: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProductViewModel = viewModel()
 ) {
@@ -137,6 +143,20 @@ fun ProducerHomeScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item {
+                        QuickActionsSection(onViewOrders = onViewOrders)
+                    }
+
+                    item {
+                        Text(
+                            text = "My Products",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Charcoal,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+
                     items(
                         items = listState.products,
                         key = { it.id ?: it.name }
@@ -204,6 +224,111 @@ private fun EmptyProductsState(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text("Create Your First Product", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun QuickActionsSection(
+    onViewOrders: () -> Unit
+) {
+    Column {
+        Text(
+            text = "Quick Actions",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Charcoal,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            QuickActionCard(
+                icon = Icons.Default.ShoppingBag,
+                label = "Orders",
+                onClick = onViewOrders,
+                modifier = Modifier.weight(1f)
+            )
+
+            QuickActionCard(
+                icon = Icons.Default.BarChart,
+                label = "Sales",
+                onClick = { /* Coming soon */ },
+                modifier = Modifier.weight(1f),
+                enabled = false
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            QuickActionCard(
+                icon = Icons.Default.Inventory,
+                label = "Inventory",
+                onClick = { /* Coming soon */ },
+                modifier = Modifier.weight(1f),
+                enabled = false
+            )
+
+            QuickActionCard(
+                icon = Icons.Default.AccountBalanceWallet,
+                label = "Payouts",
+                onClick = { /* Coming soon */ },
+                modifier = Modifier.weight(1f),
+                enabled = false
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Card(
+        onClick = onClick,
+        enabled = enabled,
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) Color.White else Color.White.copy(alpha = 0.5f)
+        ),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (enabled) Mustard else Charcoal.copy(alpha = 0.3f),
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (enabled) Charcoal else Charcoal.copy(alpha = 0.3f)
+            )
+            if (!enabled) {
+                Text(
+                    text = "Coming Soon",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Charcoal.copy(alpha = 0.5f)
+                )
+            }
         }
     }
 }

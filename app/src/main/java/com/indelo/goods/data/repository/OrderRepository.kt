@@ -28,6 +28,22 @@ class OrderRepository {
         }
     }
 
+    suspend fun getOrdersByProducer(producerId: String): Result<List<Order>> = withContext(Dispatchers.IO) {
+        try {
+            val orders = postgrest
+                .from("orders")
+                .select {
+                    filter {
+                        eq("producer_id", producerId)
+                    }
+                }
+                .decodeList<Order>()
+            Result.success(orders)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getOrderById(id: String): Result<Order?> = withContext(Dispatchers.IO) {
         try {
             val order = postgrest
