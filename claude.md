@@ -413,6 +413,95 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
     FOR DELETE USING (bucket_id = 'products' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
+### Shopper Preferences
+```sql
+CREATE TABLE shopper_preferences (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id),
+    favorite_categories TEXT[] DEFAULT '{}',      -- Array of category names
+    notifications_enabled BOOLEAN DEFAULT FALSE,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE shopper_preferences ENABLE ROW LEVEL SECURITY;
+
+-- Users can manage their own preferences
+CREATE POLICY "Shoppers can CRUD own preferences" ON shopper_preferences
+    FOR ALL USING (auth.uid() = user_id);
+```
+
+### Shopper Subscriptions
+```sql
+CREATE TABLE shopper_subscriptions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+
+    -- Subscription Status
+    status TEXT DEFAULT 'inactive',              -- inactive, active, cancelled, past_due, trial
+    stripe_subscription_id TEXT,
+
+    -- Billing Period
+    current_period_start TIMESTAMPTZ,
+    current_period_end TIMESTAMPTZ,
+
+    -- Usage Tracking
+    products_used_this_month INTEGER DEFAULT 0,  -- Max 3 per month
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT max_three_products CHECK (products_used_this_month <= 3)
+);
+
+-- Enable RLS
+ALTER TABLE shopper_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Users can manage their own subscriptions
+CREATE POLICY "Shoppers can CRUD own subscriptions" ON shopper_subscriptions
+    FOR ALL USING (auth.uid() = user_id);
+```
+
+### Monthly Product Selections
+```sql
+CREATE TABLE monthly_product_selections (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+    -- Relationships
+    subscription_id UUID NOT NULL REFERENCES shopper_subscriptions(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
+    shop_id UUID REFERENCES shops(id),           -- Where product was redeemed
+
+    -- Selection Info
+    month TEXT NOT NULL,                          -- Format: YYYY-MM
+    redeemed BOOLEAN DEFAULT FALSE,
+    redeemed_at TIMESTAMPTZ,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    -- Ensure 3 selections per month
+    UNIQUE (subscription_id, month, product_id)
+);
+
+-- Enable RLS
+ALTER TABLE monthly_product_selections ENABLE ROW LEVEL SECURITY;
+
+-- Users can manage their own selections
+CREATE POLICY "Shoppers can CRUD own selections" ON monthly_product_selections
+    FOR ALL USING (
+        subscription_id IN (
+            SELECT id FROM shopper_subscriptions WHERE user_id = auth.uid()
+        )
+    );
+
+-- Create index for month-based queries
+CREATE INDEX idx_monthly_selections_month ON monthly_product_selections(subscription_id, month);
+```
+
 ## Requirements
 
 ### Authentication
@@ -492,6 +581,22 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [ ] Implement sales analytics (integrate with shopper purchase data)
 - [ ] Implement Stripe Connect for payouts
 - [ ] Implement Stripe subscription billing ($50/month)
+
+### Shopper Experience
+- [x] Shopper home screen with subscription banner
+- [x] Category preferences (14 food/beverage categories with emoji chips)
+- [x] Notification opt-in for new products in favorite categories
+- [x] $49/month subscription screen
+- [x] Subscription status display (active/inactive)
+- [x] Monthly product selection screen (select 3 products to try)
+- [x] Product selection progress tracking (0-3 selected)
+- [x] Navigation between all shopper screens
+- [x] Dancing hotdog placeholders for coming soon features
+- [ ] Implement Stripe subscription billing ($49/month)
+- [ ] Implement product catalog for monthly selection
+- [ ] Implement product redemption at shops
+- [ ] Personalized product feed based on preferences
+- [ ] Push notifications for new products
 
 ### Categories
 - [ ] List categories

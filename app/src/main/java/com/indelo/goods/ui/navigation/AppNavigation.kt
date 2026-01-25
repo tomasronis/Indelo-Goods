@@ -36,6 +36,10 @@ import com.indelo.goods.ui.shop.ShopCreateScreen
 import com.indelo.goods.ui.shop.ShopListScreen
 import com.indelo.goods.ui.shop.ShopProductBrowseScreen
 import com.indelo.goods.ui.shop.ShopViewModel
+import com.indelo.goods.ui.shopper.ShopperHomeScreen
+import com.indelo.goods.ui.shopper.ShopperPreferencesScreen
+import com.indelo.goods.ui.shopper.ShopperSubscriptionScreen
+import com.indelo.goods.ui.shopper.MonthlyProductSelectionScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -77,8 +81,11 @@ sealed class Screen(val route: String) {
         fun createRoute(shopId: String) = "shop/$shopId/order"
     }
 
-    // Shopper screens (placeholder)
+    // Shopper screens
     data object ShopperHome : Screen("shopper/home")
+    data object ShopperPreferences : Screen("shopper/preferences")
+    data object ShopperSubscription : Screen("shopper/subscription")
+    data object ShopperMonthlyProducts : Screen("shopper/monthly-products")
 }
 
 @Composable
@@ -370,10 +377,33 @@ fun AppNavigation(
             )
         }
 
-        // Shopper screens (placeholder)
+        // Shopper screens
         composable(Screen.ShopperHome.route) {
-            MainScreen(
-                onSignOut = { authViewModel.signOut() }
+            ShopperHomeScreen(
+                onSignOut = { authViewModel.signOut() },
+                onViewPreferences = { navController.navigate(Screen.ShopperPreferences.route) },
+                onViewSubscription = { navController.navigate(Screen.ShopperSubscription.route) },
+                onSelectMonthlyProducts = { navController.navigate(Screen.ShopperMonthlyProducts.route) },
+                hasActiveSubscription = false, // TODO: Get from ViewModel
+                monthlyProductsSelected = 0 // TODO: Get from ViewModel
+            )
+        }
+
+        composable(Screen.ShopperPreferences.route) {
+            ShopperPreferencesScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ShopperSubscription.route) {
+            ShopperSubscriptionScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ShopperMonthlyProducts.route) {
+            MonthlyProductSelectionScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
