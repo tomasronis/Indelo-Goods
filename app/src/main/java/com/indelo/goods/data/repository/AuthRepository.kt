@@ -38,14 +38,19 @@ class AuthRepository {
             val body = JsonObject().apply {
                 addProperty("phone", phone)
             }
+            android.util.Log.d("AuthRepository", "Sending OTP to: $phone")
             val response = api.sendOtp(body)
+            android.util.Log.d("AuthRepository", "Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
             if (response.isSuccessful) {
+                android.util.Log.d("AuthRepository", "OTP sent successfully")
                 Result.success(Unit)
             } else {
                 val errorBody = response.errorBody()?.string() ?: response.message()
+                android.util.Log.e("AuthRepository", "OTP failed: $errorBody")
                 Result.failure(Exception("Failed to send OTP: $errorBody"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "OTP exception", e)
             Result.failure(e)
         }
     }

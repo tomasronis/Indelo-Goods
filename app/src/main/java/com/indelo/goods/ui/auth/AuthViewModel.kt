@@ -65,9 +65,12 @@ class AuthViewModel(
     fun sendOtp(phone: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, phone = phone) }
+            android.util.Log.d("AuthViewModel", "Calling sendOtp for: $phone")
             val result = authRepository.sendOtp(phone)
+            android.util.Log.d("AuthViewModel", "Result: isSuccess=${result.isSuccess}, error=${result.exceptionOrNull()?.message}")
             _uiState.update {
                 if (result.isSuccess) {
+                    android.util.Log.d("AuthViewModel", "OTP sent successfully, moving to verification")
                     it.copy(
                         isLoading = false,
                         otpSent = true,
@@ -75,9 +78,11 @@ class AuthViewModel(
                         error = null
                     )
                 } else {
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to send code"
+                    android.util.Log.e("AuthViewModel", "OTP failed with error: $errorMsg")
                     it.copy(
                         isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to send code"
+                        error = errorMsg
                     )
                 }
             }
