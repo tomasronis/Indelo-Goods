@@ -48,30 +48,38 @@ class ProductViewModel(
     val editState: StateFlow<ProductEditState> = _editState.asStateFlow()
 
     init {
+        android.util.Log.d("ProductViewModel", "Initializing ProductViewModel, context=$context")
         loadProducerProducts()
     }
 
     fun loadProducerProducts() {
         viewModelScope.launch {
+            android.util.Log.d("ProductViewModel", "Loading producer products...")
             _listState.update { it.copy(isLoading = true, error = null) }
 
             val producerId = authRepository.currentUserId
+            android.util.Log.d("ProductViewModel", "Producer ID: $producerId")
             if (producerId == null) {
+                android.util.Log.e("ProductViewModel", "No producer ID - not authenticated")
                 _listState.update { it.copy(isLoading = false, error = "Not authenticated") }
                 return@launch
             }
 
             val result = productRepository.getProductsByProducer(producerId)
+            android.util.Log.d("ProductViewModel", "Load result: isSuccess=${result.isSuccess}, productsCount=${result.getOrNull()?.size}")
             _listState.update {
                 if (result.isSuccess) {
+                    android.util.Log.d("ProductViewModel", "Successfully loaded ${result.getOrDefault(emptyList()).size} products")
                     it.copy(
                         products = result.getOrDefault(emptyList()),
                         isLoading = false
                     )
                 } else {
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to load products"
+                    android.util.Log.e("ProductViewModel", "Failed to load products: $errorMsg", result.exceptionOrNull())
                     it.copy(
                         isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to load products"
+                        error = errorMsg
                     )
                 }
             }

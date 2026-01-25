@@ -154,19 +154,15 @@ fun AppNavigation(
         composable(Screen.ProducerHome.route) {
             android.util.Log.d("AppNavigation", "Loading ProducerHome screen")
             val context = LocalContext.current
-            val productViewModel: ProductViewModel = try {
-                viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            @Suppress("UNCHECKED_CAST")
-                            return ProductViewModel(context) as T
-                        }
+            val productViewModel: ProductViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        android.util.Log.d("AppNavigation", "Creating ProductViewModel with context: $context")
+                        @Suppress("UNCHECKED_CAST")
+                        return ProductViewModel(context) as T
                     }
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("AppNavigation", "Error creating ProductViewModel", e)
-                throw e
-            }
+                }
+            )
 
             ProducerHomeScreen(
                 onSignOut = { authViewModel.signOut() },
