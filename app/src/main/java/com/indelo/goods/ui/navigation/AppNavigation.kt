@@ -109,7 +109,7 @@ fun AppNavigation(
         }
     }
 
-    val startDestination = if (isAuthenticated) {
+    val startDestination = if (isAuthenticated && authUiState.selectedUserType != null) {
         getHomeRouteForUserType(authUiState.selectedUserType)
     } else {
         Screen.Auth.route
@@ -419,7 +419,8 @@ fun AppNavigation(
         if (isAuthenticated) {
             android.util.Log.d("AppNavigation", "User is authenticated")
             // Only navigate if user has selected a type
-            authUiState.selectedUserType?.let { userType ->
+            if (authUiState.selectedUserType != null) {
+                val userType = authUiState.selectedUserType
                 android.util.Log.d("AppNavigation", "User has selected type: $userType")
                 if (navController.currentDestination?.route == Screen.Auth.route) {
                     val route = getHomeRouteForUserType(userType)
@@ -428,7 +429,16 @@ fun AppNavigation(
                         popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }
-            } ?: android.util.Log.d("AppNavigation", "User has NOT selected type yet")
+            } else {
+                android.util.Log.d("AppNavigation", "User has NOT selected type yet")
+                // User is authenticated but hasn't selected type - ensure they're on auth screen
+                if (navController.currentDestination?.route != Screen.Auth.route) {
+                    android.util.Log.d("AppNavigation", "Navigating back to auth for type selection")
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
         } else {
             android.util.Log.d("AppNavigation", "User is NOT authenticated, navigating to auth screen")
             // Not authenticated - navigate to auth screen
