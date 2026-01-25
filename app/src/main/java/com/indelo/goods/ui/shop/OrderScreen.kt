@@ -291,7 +291,7 @@ private fun OrderItemCard(
                             .background(Bun)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Remove,
+                            imageVector = Icons.Filled.Remove,
                             contentDescription = "Decrease",
                             tint = Charcoal,
                             modifier = Modifier.size(16.dp)

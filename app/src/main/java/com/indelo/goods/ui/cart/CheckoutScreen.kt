@@ -303,7 +303,7 @@ private fun CartItemCard(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Remove,
+                            imageVector = Icons.Filled.Remove,
                             contentDescription = "Decrease",
                             tint = Charcoal
                         )

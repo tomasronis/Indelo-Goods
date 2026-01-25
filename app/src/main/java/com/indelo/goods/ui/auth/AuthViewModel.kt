@@ -39,7 +39,7 @@ class AuthViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = SessionStatus.LoadingFromStorage
+            initialValue = SessionStatus.Initializing
         )
 
     val isAuthenticated: StateFlow<Boolean> = authRepository.isAuthenticated

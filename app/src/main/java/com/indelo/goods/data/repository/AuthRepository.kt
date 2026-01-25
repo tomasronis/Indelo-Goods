@@ -1,45 +1,49 @@
 package com.indelo.goods.data.repository
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.indelo.goods.data.model.UserProfile
 import com.indelo.goods.data.model.UserType
 import com.indelo.goods.data.supabase.SupabaseClientProvider
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.Email
-import io.github.jan.supabase.auth.providers.builtin.Phone
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class AuthRepository {
 
-    private val auth = SupabaseClientProvider.client.auth
-    private val postgrest = SupabaseClientProvider.client.postgrest
+    private val api = SupabaseClientProvider.api
+    private val session = SupabaseClientProvider.Session
+    private val gson = Gson()
 
-    val isAuthenticated: Flow<Boolean> = auth.sessionStatus.map { status ->
-        status is SessionStatus.Authenticated
-    }
+    // Session status flow
+    private val _sessionStatus = MutableStateFlow(session.isAuthenticated())
+    val isAuthenticated: Flow<Boolean> = _sessionStatus
 
-    val sessionStatus: Flow<SessionStatus> = auth.sessionStatus
+    val sessionStatus: Flow<Boolean> = _sessionStatus
 
     val currentUserId: String?
-        get() = auth.currentUserOrNull()?.id
+        get() = session.getUser()?.id
 
     val currentUserEmail: String?
-        get() = auth.currentUserOrNull()?.email
+        get() = session.getUser()?.email
 
     val currentUserPhone: String?
-        get() = auth.currentUserOrNull()?.phone
+        get() = session.getUser()?.phone
 
     // Phone OTP - Send code
     suspend fun sendOtp(phone: String): Result<Unit> {
         return try {
-            auth.signInWith(Phone) {
-                this.phone = phone
+            val body = JsonObject().apply {
+                addProperty("phone", phone)
             }
-            Result.success(Unit)
+            val response = api.sendOtp(body)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to send OTP: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -48,11 +52,19 @@ class AuthRepository {
     // Phone OTP - Verify code
     suspend fun verifyOtp(phone: String, token: String): Result<Unit> {
         return try {
-            auth.verifyPhoneOtp(
-                phone = phone,
-                token = token
-            )
-            Result.success(Unit)
+            val body = JsonObject().apply {
+                addProperty("phone", phone)
+                addProperty("token", token)
+                addProperty("type", "sms")
+            }
+            val response = api.verifyOtp(body)
+            if (response.isSuccessful && response.body() != null) {
+                session.setSession(response.body()!!)
+                _sessionStatus.value = true
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to verify OTP: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -61,11 +73,18 @@ class AuthRepository {
     // Email/password sign up (fallback)
     suspend fun signUp(email: String, password: String): Result<Unit> {
         return try {
-            auth.signUpWith(Email) {
-                this.email = email
-                this.password = password
+            val body = JsonObject().apply {
+                addProperty("email", email)
+                addProperty("password", password)
             }
-            Result.success(Unit)
+            val response = api.signUp(body)
+            if (response.isSuccessful && response.body() != null) {
+                session.setSession(response.body()!!)
+                _sessionStatus.value = true
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to sign up: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -74,11 +93,18 @@ class AuthRepository {
     // Email/password sign in (fallback)
     suspend fun signIn(email: String, password: String): Result<Unit> {
         return try {
-            auth.signInWith(Email) {
-                this.email = email
-                this.password = password
+            val body = JsonObject().apply {
+                addProperty("email", email)
+                addProperty("password", password)
             }
-            Result.success(Unit)
+            val response = api.signIn(body)
+            if (response.isSuccessful && response.body() != null) {
+                session.setSession(response.body()!!)
+                _sessionStatus.value = true
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to sign in: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -86,7 +112,9 @@ class AuthRepository {
 
     suspend fun signOut(): Result<Unit> {
         return try {
-            auth.signOut()
+            api.signOut()
+            session.clearSession()
+            _sessionStatus.value = false
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -95,8 +123,15 @@ class AuthRepository {
 
     suspend fun resetPassword(email: String): Result<Unit> {
         return try {
-            auth.resetPasswordForEmail(email)
-            Result.success(Unit)
+            val body = JsonObject().apply {
+                addProperty("email", email)
+            }
+            val response = api.resetPassword(body)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to reset password: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -114,12 +149,16 @@ class AuthRepository {
                 userType = userType.name
             )
 
-            // Upsert the profile (insert or update if exists)
-            postgrest
-                .from("user_profiles")
-                .upsert(profile)
+            val response = api.insert(
+                table = "user_profiles",
+                body = profile
+            )
 
-            Result.success(Unit)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to save user type: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -132,17 +171,22 @@ class AuthRepository {
         return@withContext try {
             val userId = currentUserId ?: return@withContext Result.success(null)
 
-            val profile = postgrest
-                .from("user_profiles")
-                .select {
-                    filter {
-                        eq("id", userId)
-                    }
-                }
-                .decodeSingleOrNull<UserProfile>()
+            val filters = mapOf("id" to "eq.$userId")
+            val response = api.select(
+                table = "user_profiles",
+                filters = filters
+            )
 
-            val userType = profile?.userType?.let { UserType.valueOf(it) }
-            Result.success(userType)
+            if (response.isSuccessful) {
+                val profiles = response.body() ?: emptyList()
+                val profile = profiles.firstOrNull()?.let {
+                    gson.fromJson(it, UserProfile::class.java)
+                }
+                val userType = profile?.userType?.let { UserType.valueOf(it) }
+                Result.success(userType)
+            } else {
+                Result.failure(Exception("Failed to get user type: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

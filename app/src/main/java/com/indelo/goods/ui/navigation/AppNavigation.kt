@@ -6,6 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -152,12 +154,13 @@ fun AppNavigation(
         composable(Screen.ProducerHome.route) {
             val context = LocalContext.current
             val productViewModel: ProductViewModel = viewModel(
-                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
-                    context.applicationContext as android.app.Application
-                )
-            ) {
-                ProductViewModel(context)
-            }
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ProductViewModel(context) as T
+                    }
+                }
+            )
 
             ProducerHomeScreen(
                 onSignOut = { authViewModel.signOut() },
@@ -206,12 +209,13 @@ fun AppNavigation(
         composable(Screen.ProductCreate.route) {
             val context = LocalContext.current
             val productViewModel: ProductViewModel = viewModel(
-                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
-                    context.applicationContext as android.app.Application
-                )
-            ) {
-                ProductViewModel(context)
-            }
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ProductViewModel(context) as T
+                    }
+                }
+            )
             val createState by productViewModel.createState.collectAsState()
 
             LaunchedEffect(createState.isSuccess) {
@@ -237,12 +241,13 @@ fun AppNavigation(
             val productId = backStackEntry.arguments?.getString("productId") ?: return@composable
             val context = LocalContext.current
             val productViewModel: ProductViewModel = viewModel(
-                factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.getInstance(
-                    context.applicationContext as android.app.Application
-                )
-            ) {
-                ProductViewModel(context)
-            }
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ProductViewModel(context) as T
+                    }
+                }
+            )
 
             ProductEditScreen(
                 productId = productId,

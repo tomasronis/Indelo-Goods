@@ -231,7 +231,7 @@ fun ProductCreateScreen(
 }
 
 @Composable
-private fun StepIndicator(
+internal fun StepIndicator(
     steps: List<ProductFormStep>,
     currentStep: Int,
     modifier: Modifier = Modifier
@@ -356,7 +356,7 @@ private fun NavigationButtons(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BasicInfoStep(
+internal fun BasicInfoStep(
     formState: ProductFormState,
     onFormStateChange: (ProductFormState) -> Unit,
     selectedImageUri: Uri? = null,
@@ -459,7 +459,7 @@ private fun BasicInfoStep(
 }
 
 @Composable
-private fun PricingStep(
+internal fun PricingStep(
     formState: ProductFormState,
     onFormStateChange: (ProductFormState) -> Unit
 ) {
@@ -521,7 +521,7 @@ private fun PricingStep(
 }
 
 @Composable
-private fun SpecificationsStep(
+internal fun SpecificationsStep(
     formState: ProductFormState,
     onFormStateChange: (ProductFormState) -> Unit
 ) {
@@ -614,7 +614,7 @@ private fun SpecificationsStep(
 }
 
 @Composable
-private fun IngredientsStep(
+internal fun IngredientsStep(
     formState: ProductFormState,
     onFormStateChange: (ProductFormState) -> Unit
 ) {
@@ -651,7 +651,7 @@ private fun IngredientsStep(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CertificationsStep(
+internal fun CertificationsStep(
     formState: ProductFormState,
     onFormStateChange: (ProductFormState) -> Unit
 ) {
@@ -742,7 +742,7 @@ private fun CertificationChip(
 }
 
 @Composable
-private fun ReviewStep(formState: ProductFormState) {
+internal fun ReviewStep(formState: ProductFormState) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SectionHeader(
             title = "Review Your Product",
