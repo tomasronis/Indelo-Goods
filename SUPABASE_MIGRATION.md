@@ -22,16 +22,17 @@ Migrated from Supabase Kotlin SDK (which had dependency resolution issues) to di
 - ✅ Storage API: File upload/delete endpoints
 - ✅ Session Management: Token storage and authentication state
 
-## Files That Still Need Updating
+## Updated Files
 
-The following repository files still reference the old Supabase SDK and need to be updated to use the new REST API:
+All repository files have been migrated to use the new REST API:
 
-1. **ProductRepository.kt** - Database operations for products + image upload
-2. **OrderRepository.kt** - Order management
-3. **ShopRepository.kt** - Shop management
-4. **ShopperRepository.kt** - Shopper preferences and subscriptions
-5. **AuthViewModel.kt** - May need minor updates for session status handling
-6. **AppNavigation.kt** - May need updates for auth state checking
+1. ✅ **AuthRepository.kt** - Authentication (OTP, email/password)
+2. ✅ **ProductRepository.kt** - Database operations for products + image upload
+3. ✅ **OrderRepository.kt** - Order management
+4. ✅ **ShopRepository.kt** - Shop management
+5. ✅ **ShopperRepository.kt** - Shopper preferences and subscriptions
+6. ✅ **AuthViewModel.kt** - Updated for Boolean session status
+7. ✅ **AppNavigation.kt** - Updated for Boolean auth state
 
 ## How the REST API Works
 

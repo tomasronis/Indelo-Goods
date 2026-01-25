@@ -44,7 +44,6 @@ import com.indelo.goods.ui.shopper.ShopperSubscriptionScreen
 import com.indelo.goods.ui.shopper.MonthlyProductSelectionScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import io.github.jan.supabase.auth.status.SessionStatus
 
 sealed class Screen(val route: String) {
     data object Auth : Screen("auth")
@@ -97,7 +96,7 @@ fun AppNavigation(
     authViewModel: AuthViewModel = viewModel(),
     deepLinkProductId: String? = null
 ) {
-    val sessionStatus by authViewModel.sessionStatus.collectAsState()
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
     val authUiState by authViewModel.uiState.collectAsState()
 
     // Handle deep link navigation
@@ -110,9 +109,10 @@ fun AppNavigation(
         }
     }
 
-    val startDestination = when (sessionStatus) {
-        is SessionStatus.Authenticated -> getHomeRouteForUserType(authUiState.selectedUserType)
-        else -> Screen.Auth.route
+    val startDestination = if (isAuthenticated) {
+        getHomeRouteForUserType(authUiState.selectedUserType)
+    } else {
+        Screen.Auth.route
     }
 
     NavHost(
@@ -414,27 +414,24 @@ fun AppNavigation(
     }
 
     // Handle navigation based on auth state and user type selection
-    LaunchedEffect(sessionStatus, authUiState.selectedUserType) {
-        when (sessionStatus) {
-            is SessionStatus.Authenticated -> {
-                // Only navigate if user has selected a type
-                authUiState.selectedUserType?.let { userType ->
-                    if (navController.currentDestination?.route == Screen.Auth.route) {
-                        val route = getHomeRouteForUserType(userType)
-                        navController.navigate(route) {
-                            popUpTo(Screen.Auth.route) { inclusive = true }
-                        }
+    LaunchedEffect(isAuthenticated, authUiState.selectedUserType) {
+        if (isAuthenticated) {
+            // Only navigate if user has selected a type
+            authUiState.selectedUserType?.let { userType ->
+                if (navController.currentDestination?.route == Screen.Auth.route) {
+                    val route = getHomeRouteForUserType(userType)
+                    navController.navigate(route) {
+                        popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }
             }
-            is SessionStatus.NotAuthenticated -> {
-                if (navController.currentDestination?.route != Screen.Auth.route) {
-                    navController.navigate(Screen.Auth.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+        } else {
+            // Not authenticated - navigate to auth screen
+            if (navController.currentDestination?.route != Screen.Auth.route) {
+                navController.navigate(Screen.Auth.route) {
+                    popUpTo(0) { inclusive = true }
                 }
             }
-            else -> { /* Loading state, do nothing */ }
         }
     }
 }

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.indelo.goods.data.model.UserType
 import com.indelo.goods.data.repository.AuthRepository
-import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,13 +34,6 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    val sessionStatus: StateFlow<SessionStatus> = authRepository.sessionStatus
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = SessionStatus.Initializing
-        )
-
     val isAuthenticated: StateFlow<Boolean> = authRepository.isAuthenticated
         .stateIn(
             scope = viewModelScope,
@@ -52,8 +44,8 @@ class AuthViewModel(
     init {
         // Load user type when authenticated
         viewModelScope.launch {
-            sessionStatus.collect { status ->
-                if (status is SessionStatus.Authenticated) {
+            isAuthenticated.collect { authenticated ->
+                if (authenticated) {
                     loadUserType()
                 }
             }

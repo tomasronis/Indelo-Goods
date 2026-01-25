@@ -1,28 +1,28 @@
 package com.indelo.goods.data.repository
 
+import com.google.gson.Gson
 import com.indelo.goods.data.model.Order
 import com.indelo.goods.data.model.OrderItem
 import com.indelo.goods.data.supabase.SupabaseClientProvider
-import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class OrderRepository {
 
-    private val postgrest = SupabaseClientProvider.client.postgrest
+    private val api = SupabaseClientProvider.api
+    private val gson = Gson()
 
     // Orders
     suspend fun getOrdersByShop(shopId: String): Result<List<Order>> = withContext(Dispatchers.IO) {
         try {
-            val orders = postgrest
-                .from("orders")
-                .select {
-                    filter {
-                        eq("shop_id", shopId)
-                    }
-                }
-                .decodeList<Order>()
-            Result.success(orders)
+            val filters = mapOf("shop_id" to "eq.$shopId")
+            val response = api.select(table = "orders", filters = filters)
+            if (response.isSuccessful) {
+                val orders = response.body()?.map { gson.fromJson(it, Order::class.java) } ?: emptyList()
+                Result.success(orders)
+            } else {
+                Result.failure(Exception("Failed to get orders: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -30,15 +30,14 @@ class OrderRepository {
 
     suspend fun getOrdersByProducer(producerId: String): Result<List<Order>> = withContext(Dispatchers.IO) {
         try {
-            val orders = postgrest
-                .from("orders")
-                .select {
-                    filter {
-                        eq("producer_id", producerId)
-                    }
-                }
-                .decodeList<Order>()
-            Result.success(orders)
+            val filters = mapOf("producer_id" to "eq.$producerId")
+            val response = api.select(table = "orders", filters = filters)
+            if (response.isSuccessful) {
+                val orders = response.body()?.map { gson.fromJson(it, Order::class.java) } ?: emptyList()
+                Result.success(orders)
+            } else {
+                Result.failure(Exception("Failed to get orders: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -46,15 +45,14 @@ class OrderRepository {
 
     suspend fun getOrderById(id: String): Result<Order?> = withContext(Dispatchers.IO) {
         try {
-            val order = postgrest
-                .from("orders")
-                .select {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-                .decodeSingleOrNull<Order>()
-            Result.success(order)
+            val filters = mapOf("id" to "eq.$id")
+            val response = api.select(table = "orders", filters = filters)
+            if (response.isSuccessful) {
+                val order = response.body()?.firstOrNull()?.let { gson.fromJson(it, Order::class.java) }
+                Result.success(order)
+            } else {
+                Result.failure(Exception("Failed to get order: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -62,13 +60,17 @@ class OrderRepository {
 
     suspend fun createOrder(order: Order): Result<Order> = withContext(Dispatchers.IO) {
         try {
-            val createdOrder = postgrest
-                .from("orders")
-                .insert(order) {
-                    select()
+            val response = api.insert(table = "orders", body = order)
+            if (response.isSuccessful) {
+                val createdOrder = response.body()?.firstOrNull()?.let { gson.fromJson(it, Order::class.java) }
+                if (createdOrder != null) {
+                    Result.success(createdOrder)
+                } else {
+                    Result.failure(Exception("Failed to parse created order"))
                 }
-                .decodeSingle<Order>()
-            Result.success(createdOrder)
+            } else {
+                Result.failure(Exception("Failed to create order: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -76,16 +78,19 @@ class OrderRepository {
 
     suspend fun updateOrderStatus(orderId: String, status: String): Result<Order> = withContext(Dispatchers.IO) {
         try {
-            val updatedOrder = postgrest
-                .from("orders")
-                .update(mapOf("status" to status)) {
-                    filter {
-                        eq("id", orderId)
-                    }
-                    select()
+            val filters = mapOf("id" to "eq.$orderId")
+            val updates = mapOf("status" to status)
+            val response = api.update(table = "orders", body = updates, filters = filters)
+            if (response.isSuccessful) {
+                val updatedOrder = response.body()?.firstOrNull()?.let { gson.fromJson(it, Order::class.java) }
+                if (updatedOrder != null) {
+                    Result.success(updatedOrder)
+                } else {
+                    Result.failure(Exception("Failed to parse updated order"))
                 }
-                .decodeSingle<Order>()
-            Result.success(updatedOrder)
+            } else {
+                Result.failure(Exception("Failed to update order: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -94,15 +99,14 @@ class OrderRepository {
     // Order Items
     suspend fun getOrderItems(orderId: String): Result<List<OrderItem>> = withContext(Dispatchers.IO) {
         try {
-            val items = postgrest
-                .from("order_items")
-                .select {
-                    filter {
-                        eq("order_id", orderId)
-                    }
-                }
-                .decodeList<OrderItem>()
-            Result.success(items)
+            val filters = mapOf("order_id" to "eq.$orderId")
+            val response = api.select(table = "order_items", filters = filters)
+            if (response.isSuccessful) {
+                val items = response.body()?.map { gson.fromJson(it, OrderItem::class.java) } ?: emptyList()
+                Result.success(items)
+            } else {
+                Result.failure(Exception("Failed to get order items: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -110,13 +114,17 @@ class OrderRepository {
 
     suspend fun createOrderItem(item: OrderItem): Result<OrderItem> = withContext(Dispatchers.IO) {
         try {
-            val createdItem = postgrest
-                .from("order_items")
-                .insert(item) {
-                    select()
+            val response = api.insert(table = "order_items", body = item)
+            if (response.isSuccessful) {
+                val createdItem = response.body()?.firstOrNull()?.let { gson.fromJson(it, OrderItem::class.java) }
+                if (createdItem != null) {
+                    Result.success(createdItem)
+                } else {
+                    Result.failure(Exception("Failed to parse created order item"))
                 }
-                .decodeSingle<OrderItem>()
-            Result.success(createdItem)
+            } else {
+                Result.failure(Exception("Failed to create order item: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -125,19 +133,18 @@ class OrderRepository {
     suspend fun createOrderWithItems(order: Order, items: List<OrderItem>): Result<Order> = withContext(Dispatchers.IO) {
         try {
             // Create order first
-            val createdOrder = postgrest
-                .from("orders")
-                .insert(order) {
-                    select()
-                }
-                .decodeSingle<Order>()
+            val orderResponse = api.insert(table = "orders", body = order)
+            if (!orderResponse.isSuccessful) {
+                return@withContext Result.failure(Exception("Failed to create order: ${orderResponse.message()}"))
+            }
+
+            val createdOrder = orderResponse.body()?.firstOrNull()?.let { gson.fromJson(it, Order::class.java) }
+                ?: return@withContext Result.failure(Exception("Failed to parse created order"))
 
             // Then create order items
             val itemsWithOrderId = items.map { it.copy(orderId = createdOrder.id!!) }
             for (item in itemsWithOrderId) {
-                postgrest
-                    .from("order_items")
-                    .insert(item)
+                api.insert(table = "order_items", body = item)
             }
 
             Result.success(createdOrder)

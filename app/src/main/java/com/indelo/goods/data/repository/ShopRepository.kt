@@ -1,22 +1,25 @@
 package com.indelo.goods.data.repository
 
+import com.google.gson.Gson
 import com.indelo.goods.data.model.Shop
 import com.indelo.goods.data.supabase.SupabaseClientProvider
-import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class ShopRepository {
 
-    private val postgrest = SupabaseClientProvider.client.postgrest
+    private val api = SupabaseClientProvider.api
+    private val gson = Gson()
 
     suspend fun getShops(): Result<List<Shop>> = withContext(Dispatchers.IO) {
         try {
-            val shops = postgrest
-                .from("shops")
-                .select()
-                .decodeList<Shop>()
-            Result.success(shops)
+            val response = api.select(table = "shops")
+            if (response.isSuccessful) {
+                val shops = response.body()?.map { gson.fromJson(it, Shop::class.java) } ?: emptyList()
+                Result.success(shops)
+            } else {
+                Result.failure(Exception("Failed to get shops: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -24,15 +27,14 @@ class ShopRepository {
 
     suspend fun getShopsByOwner(ownerId: String): Result<List<Shop>> = withContext(Dispatchers.IO) {
         try {
-            val shops = postgrest
-                .from("shops")
-                .select {
-                    filter {
-                        eq("owner_id", ownerId)
-                    }
-                }
-                .decodeList<Shop>()
-            Result.success(shops)
+            val filters = mapOf("owner_id" to "eq.$ownerId")
+            val response = api.select(table = "shops", filters = filters)
+            if (response.isSuccessful) {
+                val shops = response.body()?.map { gson.fromJson(it, Shop::class.java) } ?: emptyList()
+                Result.success(shops)
+            } else {
+                Result.failure(Exception("Failed to get shops: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -40,15 +42,14 @@ class ShopRepository {
 
     suspend fun getShopById(id: String): Result<Shop?> = withContext(Dispatchers.IO) {
         try {
-            val shop = postgrest
-                .from("shops")
-                .select {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-                .decodeSingleOrNull<Shop>()
-            Result.success(shop)
+            val filters = mapOf("id" to "eq.$id")
+            val response = api.select(table = "shops", filters = filters)
+            if (response.isSuccessful) {
+                val shop = response.body()?.firstOrNull()?.let { gson.fromJson(it, Shop::class.java) }
+                Result.success(shop)
+            } else {
+                Result.failure(Exception("Failed to get shop: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -56,13 +57,17 @@ class ShopRepository {
 
     suspend fun createShop(shop: Shop): Result<Shop> = withContext(Dispatchers.IO) {
         try {
-            val createdShop = postgrest
-                .from("shops")
-                .insert(shop) {
-                    select()
+            val response = api.insert(table = "shops", body = shop)
+            if (response.isSuccessful) {
+                val createdShop = response.body()?.firstOrNull()?.let { gson.fromJson(it, Shop::class.java) }
+                if (createdShop != null) {
+                    Result.success(createdShop)
+                } else {
+                    Result.failure(Exception("Failed to parse created shop"))
                 }
-                .decodeSingle<Shop>()
-            Result.success(createdShop)
+            } else {
+                Result.failure(Exception("Failed to create shop: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -70,16 +75,18 @@ class ShopRepository {
 
     suspend fun updateShop(shop: Shop): Result<Shop> = withContext(Dispatchers.IO) {
         try {
-            val updatedShop = postgrest
-                .from("shops")
-                .update(shop) {
-                    filter {
-                        eq("id", shop.id!!)
-                    }
-                    select()
+            val filters = mapOf("id" to "eq.${shop.id!!}")
+            val response = api.update(table = "shops", body = shop, filters = filters)
+            if (response.isSuccessful) {
+                val updatedShop = response.body()?.firstOrNull()?.let { gson.fromJson(it, Shop::class.java) }
+                if (updatedShop != null) {
+                    Result.success(updatedShop)
+                } else {
+                    Result.failure(Exception("Failed to parse updated shop"))
                 }
-                .decodeSingle<Shop>()
-            Result.success(updatedShop)
+            } else {
+                Result.failure(Exception("Failed to update shop: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -87,14 +94,13 @@ class ShopRepository {
 
     suspend fun deleteShop(id: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            postgrest
-                .from("shops")
-                .delete {
-                    filter {
-                        eq("id", id)
-                    }
-                }
-            Result.success(Unit)
+            val filters = mapOf("id" to "eq.$id")
+            val response = api.delete(table = "shops", filters = filters)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to delete shop: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
