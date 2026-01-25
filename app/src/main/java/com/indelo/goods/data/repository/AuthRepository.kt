@@ -63,15 +63,23 @@ class AuthRepository {
                 addProperty("token", token)
                 addProperty("type", "sms")
             }
+            android.util.Log.d("AuthRepository", "Verifying OTP for: $phone, token: $token")
             val response = api.verifyOtp(body)
+            android.util.Log.d("AuthRepository", "Verify response code: ${response.code()}, isSuccessful: ${response.isSuccessful}, hasBody: ${response.body() != null}")
             if (response.isSuccessful && response.body() != null) {
-                session.setSession(response.body()!!)
+                val authResponse = response.body()!!
+                android.util.Log.d("AuthRepository", "Auth response: userId=${authResponse.user?.id}, hasAccessToken=${authResponse.access_token != null}")
+                session.setSession(authResponse)
                 _sessionStatus.value = true
+                android.util.Log.d("AuthRepository", "Session set, isAuthenticated=${session.isAuthenticated()}")
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to verify OTP: ${response.message()}"))
+                val errorBody = response.errorBody()?.string() ?: response.message()
+                android.util.Log.e("AuthRepository", "Verify OTP failed: $errorBody")
+                Result.failure(Exception("Failed to verify OTP: $errorBody"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Verify OTP exception", e)
             Result.failure(e)
         }
     }
@@ -175,7 +183,12 @@ class AuthRepository {
      */
     suspend fun getUserType(): Result<UserType?> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val userId = currentUserId ?: return@withContext Result.success(null)
+            val userId = currentUserId
+            android.util.Log.d("AuthRepository", "Getting user type for userId: $userId")
+            if (userId == null) {
+                android.util.Log.d("AuthRepository", "No userId, returning null")
+                return@withContext Result.success(null)
+            }
 
             val filters = mapOf("id" to "eq.$userId")
             val response = api.select(
@@ -183,17 +196,23 @@ class AuthRepository {
                 filters = filters
             )
 
+            android.util.Log.d("AuthRepository", "User profile response: code=${response.code()}, isSuccessful=${response.isSuccessful}")
             if (response.isSuccessful) {
                 val profiles = response.body() ?: emptyList()
+                android.util.Log.d("AuthRepository", "Found ${profiles.size} user profiles")
                 val profile = profiles.firstOrNull()?.let {
                     gson.fromJson(it, UserProfile::class.java)
                 }
                 val userType = profile?.userType?.let { UserType.valueOf(it) }
+                android.util.Log.d("AuthRepository", "User type: $userType")
                 Result.success(userType)
             } else {
-                Result.failure(Exception("Failed to get user type: ${response.message()}"))
+                val errorBody = response.errorBody()?.string() ?: response.message()
+                android.util.Log.e("AuthRepository", "Failed to get user type: $errorBody")
+                Result.failure(Exception("Failed to get user type: $errorBody"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Get user type exception", e)
             Result.failure(e)
         }
     }

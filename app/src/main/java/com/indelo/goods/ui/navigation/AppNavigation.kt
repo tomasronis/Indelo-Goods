@@ -415,17 +415,22 @@ fun AppNavigation(
 
     // Handle navigation based on auth state and user type selection
     LaunchedEffect(isAuthenticated, authUiState.selectedUserType) {
+        android.util.Log.d("AppNavigation", "Auth state changed: isAuthenticated=$isAuthenticated, userType=${authUiState.selectedUserType}, currentRoute=${navController.currentDestination?.route}")
         if (isAuthenticated) {
+            android.util.Log.d("AppNavigation", "User is authenticated")
             // Only navigate if user has selected a type
             authUiState.selectedUserType?.let { userType ->
+                android.util.Log.d("AppNavigation", "User has selected type: $userType")
                 if (navController.currentDestination?.route == Screen.Auth.route) {
                     val route = getHomeRouteForUserType(userType)
+                    android.util.Log.d("AppNavigation", "Navigating to home: $route")
                     navController.navigate(route) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }
-            }
+            } ?: android.util.Log.d("AppNavigation", "User has NOT selected type yet")
         } else {
+            android.util.Log.d("AppNavigation", "User is NOT authenticated, navigating to auth screen")
             // Not authenticated - navigate to auth screen
             if (navController.currentDestination?.route != Screen.Auth.route) {
                 navController.navigate(Screen.Auth.route) {

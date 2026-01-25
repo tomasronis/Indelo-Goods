@@ -45,6 +45,7 @@ class AuthViewModel(
         // Load user type when authenticated
         viewModelScope.launch {
             isAuthenticated.collect { authenticated ->
+                android.util.Log.d("AuthViewModel", "Auth state changed in init: $authenticated")
                 if (authenticated) {
                     loadUserType()
                 }
@@ -54,10 +55,15 @@ class AuthViewModel(
 
     private fun loadUserType() {
         viewModelScope.launch {
+            android.util.Log.d("AuthViewModel", "Loading user type...")
             val result = authRepository.getUserType()
+            android.util.Log.d("AuthViewModel", "User type result: isSuccess=${result.isSuccess}, userType=${result.getOrNull()}")
             if (result.isSuccess) {
                 val userType = result.getOrNull()
                 _uiState.update { it.copy(selectedUserType = userType) }
+                android.util.Log.d("AuthViewModel", "User type updated to: $userType")
+            } else {
+                android.util.Log.e("AuthViewModel", "Failed to load user type: ${result.exceptionOrNull()?.message}")
             }
         }
     }
@@ -92,18 +98,23 @@ class AuthViewModel(
     fun verifyOtp(token: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+            android.util.Log.d("AuthViewModel", "Verifying OTP token: $token for phone: ${_uiState.value.phone}")
             val result = authRepository.verifyOtp(_uiState.value.phone, token)
+            android.util.Log.d("AuthViewModel", "Verify result: isSuccess=${result.isSuccess}, error=${result.exceptionOrNull()?.message}")
             _uiState.update {
                 if (result.isSuccess) {
+                    android.util.Log.d("AuthViewModel", "OTP verified successfully, moving to user type selection")
                     it.copy(
                         isLoading = false,
                         step = AuthStep.USER_TYPE_SELECTION,
                         error = null
                     )
                 } else {
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Invalid code"
+                    android.util.Log.e("AuthViewModel", "OTP verification failed: $errorMsg")
                     it.copy(
                         isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Invalid code"
+                        error = errorMsg
                     )
                 }
             }
