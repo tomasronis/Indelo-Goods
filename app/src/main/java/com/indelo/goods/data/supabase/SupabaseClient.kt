@@ -35,11 +35,20 @@ object SupabaseClientProvider {
         .addInterceptor(loggingInterceptor)
         .addInterceptor { chain ->
             val original = chain.request()
-            val request = original.newBuilder()
+            val requestBuilder = original.newBuilder()
                 .header("apikey", SupabaseConfig.SUPABASE_ANON_KEY)
                 .header("Content-Type", "application/json")
+
+            // Add Authorization header if user is authenticated
+            Session.getBearerToken()?.let { token ->
+                requestBuilder.header("Authorization", token)
+                android.util.Log.d("SupabaseClient", "Adding Authorization header to request")
+            }
+
+            val request = requestBuilder
                 .method(original.method, original.body)
                 .build()
+
             chain.proceed(request)
         }
         .connectTimeout(30, TimeUnit.SECONDS)

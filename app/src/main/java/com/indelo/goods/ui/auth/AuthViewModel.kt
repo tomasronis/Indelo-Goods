@@ -123,13 +123,28 @@ class AuthViewModel(
 
     fun selectUserType(userType: UserType) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, selectedUserType = userType) }
+            android.util.Log.d("AuthViewModel", "User selected type: $userType")
+            _uiState.update { it.copy(isLoading = true) }
+
             val result = authRepository.saveUserType(userType)
+            android.util.Log.d("AuthViewModel", "Save user type result: isSuccess=${result.isSuccess}, error=${result.exceptionOrNull()?.message}")
+
             _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message
-                )
+                if (result.isSuccess) {
+                    android.util.Log.d("AuthViewModel", "User type saved successfully, updating UI state")
+                    it.copy(
+                        isLoading = false,
+                        selectedUserType = userType,
+                        error = null
+                    )
+                } else {
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to save user type"
+                    android.util.Log.e("AuthViewModel", "Failed to save user type: $errorMsg")
+                    it.copy(
+                        isLoading = false,
+                        error = errorMsg
+                    )
+                }
             }
         }
     }

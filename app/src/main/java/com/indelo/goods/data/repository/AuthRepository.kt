@@ -162,24 +162,36 @@ class AuthRepository {
      */
     suspend fun saveUserType(userType: UserType): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val userId = currentUserId ?: return@withContext Result.failure(Exception("User not authenticated"))
+            val userId = currentUserId
+            android.util.Log.d("AuthRepository", "Saving user type: $userType for userId: $userId")
+
+            if (userId == null) {
+                android.util.Log.e("AuthRepository", "Cannot save user type - user not authenticated")
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
 
             val profile = UserProfile(
                 id = userId,
                 userType = userType.name
             )
 
+            android.util.Log.d("AuthRepository", "Inserting profile: $profile")
             val response = api.insert(
                 table = "user_profiles",
                 body = profile
             )
 
+            android.util.Log.d("AuthRepository", "Insert response: code=${response.code()}, isSuccessful=${response.isSuccessful}")
             if (response.isSuccessful) {
+                android.util.Log.d("AuthRepository", "User type saved successfully")
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to save user type: ${response.message()}"))
+                val errorBody = response.errorBody()?.string() ?: response.message()
+                android.util.Log.e("AuthRepository", "Failed to save user type: $errorBody")
+                Result.failure(Exception("Failed to save user type: $errorBody"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Exception saving user type", e)
             Result.failure(e)
         }
     }
