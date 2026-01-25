@@ -24,6 +24,13 @@ import com.indelo.goods.ui.producer.ProductViewModel
 import com.indelo.goods.ui.producer.ProducerHomeScreen
 import com.indelo.goods.ui.public.ProductDetailScreen
 import com.indelo.goods.ui.public.ProducerProfileScreen
+import com.indelo.goods.ui.shop.OrderViewModel
+import com.indelo.goods.ui.shop.OrderScreen
+import com.indelo.goods.ui.shop.ProductBrowseViewModel
+import com.indelo.goods.ui.shop.ShopCreateScreen
+import com.indelo.goods.ui.shop.ShopListScreen
+import com.indelo.goods.ui.shop.ShopProductBrowseScreen
+import com.indelo.goods.ui.shop.ShopViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -50,8 +57,15 @@ sealed class Screen(val route: String) {
     // Shopping
     data object Checkout : Screen("checkout")
 
-    // Shop screens (placeholder)
+    // Shop screens
     data object ShopHome : Screen("shop/home")
+    data object ShopCreate : Screen("shop/create")
+    data object ShopProductBrowse : Screen("shop/{shopId}/products") {
+        fun createRoute(shopId: String) = "shop/$shopId/products"
+    }
+    data object ShopOrder : Screen("shop/{shopId}/order") {
+        fun createRoute(shopId: String) = "shop/$shopId/order"
+    }
 
     // Shopper screens (placeholder)
     data object ShopperHome : Screen("shopper/home")
@@ -237,10 +251,78 @@ fun AppNavigation(
             )
         }
 
-        // Shop screens (placeholder)
+        // Shop screens
         composable(Screen.ShopHome.route) {
-            MainScreen(
-                onSignOut = { authViewModel.signOut() }
+            val shopViewModel: ShopViewModel = viewModel()
+
+            ShopListScreen(
+                onSignOut = { authViewModel.signOut() },
+                onCreateShop = { navController.navigate(Screen.ShopCreate.route) },
+                onShopClick = { shopId ->
+                    navController.navigate(Screen.ShopProductBrowse.createRoute(shopId))
+                },
+                viewModel = shopViewModel
+            )
+        }
+
+        composable(Screen.ShopCreate.route) {
+            val shopViewModel: ShopViewModel = viewModel()
+            val formState by shopViewModel.formState.collectAsState()
+
+            LaunchedEffect(formState.isSuccess) {
+                if (formState.isSuccess) {
+                    shopViewModel.clearFormState()
+                    navController.popBackStack()
+                }
+            }
+
+            ShopCreateScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onShopCreated = { formData ->
+                    shopViewModel.createShopFromForm(formData)
+                },
+                isLoading = formState.isLoading
+            )
+        }
+
+        composable(
+            route = Screen.ShopProductBrowse.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: return@composable
+            val productBrowseViewModel: ProductBrowseViewModel = viewModel()
+            val orderViewModel: OrderViewModel = viewModel()
+
+            ShopProductBrowseScreen(
+                shopId = shopId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCart = {
+                    navController.navigate(Screen.ShopOrder.createRoute(shopId))
+                },
+                onAddToCart = { product ->
+                    orderViewModel.addProduct(product)
+                },
+                viewModel = productBrowseViewModel
+            )
+        }
+
+        composable(
+            route = Screen.ShopOrder.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: return@composable
+            val orderViewModel: OrderViewModel = viewModel()
+
+            OrderScreen(
+                shopId = shopId,
+                onNavigateBack = { navController.popBackStack() },
+                onOrderPlaced = {
+                    // Navigate back to shop list after successful order
+                    navController.navigate(Screen.ShopHome.route) {
+                        popUpTo(Screen.ShopHome.route) { inclusive = true }
+                    }
+                },
+                viewModel = orderViewModel
             )
         }
 

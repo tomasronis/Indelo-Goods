@@ -55,7 +55,12 @@ app/src/main/java/com/indelo/goods/
 │   └── supabase/       # Supabase client configuration
 ├── ui/
 │   ├── auth/           # Authentication screens
+│   ├── cart/           # Shopping cart (consumer checkout)
+│   ├── components/     # Reusable UI components (DancingHotdog, etc.)
 │   ├── navigation/     # App navigation
+│   ├── producer/       # Producer screens (product management)
+│   ├── public/         # Public screens (product detail, producer profile)
+│   ├── shop/           # Shop screens (B2B ordering)
 │   └── theme/          # Colors, typography, theming
 ├── IndeloGoodsApplication.kt
 ├── MainActivity.kt
@@ -175,6 +180,10 @@ CREATE TABLE products (
     category_id UUID REFERENCES categories(id),
     tags TEXT[],                              -- e.g., ["beverage", "sparkling"]
 
+    -- Availability (granular: by city and shop)
+    available_cities TEXT[],                  -- Cities where product is available
+    available_shop_ids UUID[],                -- Specific shops that can order this product
+
     -- Producer Info
     producer_id UUID REFERENCES auth.users(id),
     country_of_origin TEXT,
@@ -244,6 +253,127 @@ CREATE POLICY "Users can CRUD own profile" ON user_profiles
     FOR ALL USING (auth.uid() = id);
 ```
 
+### Shops
+```sql
+CREATE TABLE shops (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+
+    -- Owner
+    owner_id UUID NOT NULL REFERENCES auth.users(id),
+
+    -- Location
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    zip_code TEXT,
+    country TEXT,
+    region TEXT,                               -- Geographic region for product availability
+
+    -- Contact
+    phone TEXT,
+    email TEXT,
+
+    -- Business Info
+    business_type TEXT,                        -- e.g., "Cafe", "Restaurant", "Retail Store"
+    tax_id TEXT,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE shops ENABLE ROW LEVEL SECURITY;
+
+-- Shop owners can manage their own shops
+CREATE POLICY "Shop owners can CRUD own shops" ON shops
+    FOR ALL USING (auth.uid() = owner_id);
+
+-- Everyone can view shops
+CREATE POLICY "Shops are viewable by everyone" ON shops
+    FOR SELECT USING (true);
+```
+
+### Orders
+```sql
+CREATE TABLE orders (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+    -- Relationships
+    shop_id UUID NOT NULL REFERENCES shops(id),
+    producer_id UUID REFERENCES auth.users(id),
+
+    -- Order Info
+    status TEXT DEFAULT 'pending',             -- pending, confirmed, shipped, delivered, cancelled
+    total_amount DECIMAL(10,2) NOT NULL,
+    currency TEXT DEFAULT 'USD',
+
+    -- Shipping
+    shipping_address TEXT,
+    shipping_status TEXT,
+    tracking_number TEXT,
+
+    -- Notes
+    notes TEXT,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    fulfilled_at TIMESTAMPTZ
+);
+
+-- Enable RLS
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+-- Shop owners can view/manage orders for their shops
+CREATE POLICY "Shop owners can CRUD orders for their shops" ON orders
+    FOR ALL USING (
+        shop_id IN (SELECT id FROM shops WHERE owner_id = auth.uid())
+    );
+
+-- Producers can view orders for their products
+CREATE POLICY "Producers can view orders" ON orders
+    FOR SELECT USING (auth.uid() = producer_id);
+```
+
+### Order Items
+```sql
+CREATE TABLE order_items (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+    -- Relationships
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
+
+    -- Item Details
+    quantity INTEGER NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,         -- Price at time of order
+    subtotal DECIMAL(10,2) NOT NULL,           -- quantity * unit_price
+
+    -- Product Info (cached for historical reference)
+    product_name TEXT,
+    product_image_url TEXT,
+
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+
+-- Inherit permissions from orders table
+CREATE POLICY "Order items inherit order permissions" ON order_items
+    FOR ALL USING (
+        order_id IN (
+            SELECT id FROM orders WHERE
+            shop_id IN (SELECT id FROM shops WHERE owner_id = auth.uid())
+            OR producer_id = auth.uid()
+        )
+    );
+```
+
 ### Storage Buckets
 ```sql
 -- Create storage bucket for product images
@@ -307,6 +437,22 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [x] Public product pages (accessible via QR scan)
 - [ ] Web frontend for universal links
 
+### Shop B2B Ordering
+- [x] Create and manage multiple shop locations
+- [x] Shop list with retro styling and dancing hotdog empty state
+- [x] Multi-step shop creation form (Basic Info, Location, Contact)
+- [x] Browse products available in shop's city/region
+- [x] Granular product availability (by city and specific shop ID)
+- [x] Add products to wholesale order cart
+- [x] Adjust order quantities (case units)
+- [x] View order summary with total
+- [x] Place B2B wholesale orders
+- [x] Dancing hotdog Easter eggs throughout shop UI
+- [ ] View order history
+- [ ] Track order status
+- [ ] Producer order management (accept/reject)
+- [ ] Order fulfillment workflow
+
 ### Categories
 - [ ] List categories
 - [ ] CRUD operations
@@ -315,7 +461,8 @@ CREATE POLICY "Users can delete their own product images" ON storage.objects
 - [ ] Barcode scanning (UPC/EAN)
 - [ ] Real-time inventory updates
 - [ ] Reporting/analytics for producers
-- [ ] Shop B2B ordering portal
+- [ ] Producer order management dashboard
+- [ ] Invoice generation for B2B orders
 - [ ] iOS app
 - [ ] Web app (Next.js)
 

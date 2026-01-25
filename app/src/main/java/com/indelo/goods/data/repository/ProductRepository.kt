@@ -92,6 +92,38 @@ class ProductRepository(private val context: Context? = null) {
         }
     }
 
+    /**
+     * Get products available for a specific shop based on city and shop ID
+     * A product is available if:
+     * - availableCities contains the shop's city
+     * - availableShopIds contains the shop's ID
+     * - Both lists are null (available to all)
+     */
+    suspend fun getProductsForShop(shopId: String, city: String): Result<List<Product>> = withContext(Dispatchers.IO) {
+        try {
+            // Fetch all products (could be optimized with better filtering in the future)
+            val allProducts = postgrest
+                .from("products")
+                .select()
+                .decodeList<Product>()
+
+            // Filter products based on shop location and shop-specific availability
+            val availableProducts = allProducts.filter { product ->
+                val isAvailableByCity = product.availableCities == null ||
+                    product.availableCities.contains(city)
+
+                val isAvailableByShop = product.availableShopIds == null ||
+                    product.availableShopIds.contains(shopId)
+
+                isAvailableByCity && isAvailableByShop
+            }
+
+            Result.success(availableProducts)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun createProduct(product: Product): Result<Product> = withContext(Dispatchers.IO) {
         try {
             val createdProduct = postgrest

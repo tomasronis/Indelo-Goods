@@ -88,6 +88,33 @@ class ShopViewModel(
         }
     }
 
+    fun createShopFromForm(formData: ShopFormData) {
+        viewModelScope.launch {
+            val ownerId = authRepository.currentUserId
+            if (ownerId == null) {
+                _formState.update { it.copy(error = "Not authenticated") }
+                return@launch
+            }
+
+            val shop = Shop(
+                name = formData.name,
+                businessType = formData.businessType.ifBlank { null },
+                description = formData.description.ifBlank { null },
+                ownerId = ownerId,
+                address = formData.address.ifBlank { null },
+                city = formData.city.ifBlank { null },
+                state = formData.state.ifBlank { null },
+                zipCode = formData.zipCode.ifBlank { null },
+                country = formData.country.ifBlank { null },
+                phone = formData.phone.ifBlank { null },
+                email = formData.email.ifBlank { null },
+                taxId = formData.taxId.ifBlank { null }
+            )
+
+            createShop(shop)
+        }
+    }
+
     fun deleteShop(shopId: String) {
         viewModelScope.launch {
             _listState.update { it.copy(isLoading = true) }

@@ -82,9 +82,11 @@ data class Product(
     val categoryId: String? = null,
     val tags: List<String>? = null,      // e.g., ["beverage", "sparkling", "craft"]
 
-    // Availability
-    @SerialName("available_regions")
-    val availableRegions: List<String>? = null, // Regions where product is available
+    // Availability (granular: by city and shop)
+    @SerialName("available_cities")
+    val availableCities: List<String>? = null, // Cities where product is available
+    @SerialName("available_shop_ids")
+    val availableShopIds: List<String>? = null, // Specific shops that can order this product
 
     // Producer Info
     @SerialName("producer_id")
