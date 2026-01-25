@@ -23,6 +23,12 @@ class AuthRepository {
 
     val sessionStatus: Flow<Boolean> = _sessionStatus
 
+    init {
+        // Update session status on initialization (after loading from prefs)
+        _sessionStatus.value = session.isAuthenticated()
+        android.util.Log.d("AuthRepository", "Initialized with auth status: ${_sessionStatus.value}")
+    }
+
     val currentUserId: String?
         get() = session.getUser()?.id
 

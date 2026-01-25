@@ -117,6 +117,16 @@ private fun PhoneEntryScreen(
 ) {
     var phone by rememberSaveable { mutableStateOf("") }
 
+    // Format phone number with +1 prefix
+    val formattedPhone = remember(phone) {
+        val digits = phone.filter { it.isDigit() }
+        when {
+            digits.isEmpty() -> ""
+            digits.length <= 10 -> "+1$digits"
+            else -> "+1${digits.take(10)}"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -162,8 +172,12 @@ private fun PhoneEntryScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it.filter { c -> c.isDigit() || c == '+' } },
+            value = formattedPhone,
+            onValueChange = { newValue ->
+                // Extract only digits, removing the +1 prefix
+                val digits = newValue.removePrefix("+1").filter { it.isDigit() }
+                phone = digits
+            },
             placeholder = { Text("+1 234 567 8900") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -184,8 +198,8 @@ private fun PhoneEntryScreen(
             CircularProgressIndicator(color = Mustard)
         } else {
             Button(
-                onClick = { onSendOtp(phone) },
-                enabled = phone.length >= 10,
+                onClick = { onSendOtp(formattedPhone) },
+                enabled = phone.length == 10,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Mustard,
                     contentColor = Charcoal,
