@@ -117,14 +117,22 @@ private fun PhoneEntryScreen(
 ) {
     var phone by rememberSaveable { mutableStateOf("") }
 
-    // Format phone number with +1 prefix
+    // Format phone number for display: (XXX) XXX-XXXX
     val formattedPhone = remember(phone) {
-        val digits = phone.filter { it.isDigit() }
-        when {
-            digits.isEmpty() -> ""
-            digits.length <= 10 -> "+1$digits"
-            else -> "+1${digits.take(10)}"
+        val digits = phone.filter { it.isDigit() }.take(10)
+        when (digits.length) {
+            0 -> ""
+            in 1..3 -> "(${digits}"
+            in 4..6 -> "(${digits.take(3)}) ${digits.drop(3)}"
+            in 7..10 -> "(${digits.take(3)}) ${digits.substring(3, 6)}-${digits.drop(6)}"
+            else -> "(${digits.take(3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}"
         }
+    }
+
+    // Phone number with +1 prefix for sending to server
+    val phoneWithCountryCode = remember(phone) {
+        val digits = phone.filter { it.isDigit() }.take(10)
+        if (digits.isEmpty()) "" else "+1$digits"
     }
 
     Column(
@@ -174,11 +182,11 @@ private fun PhoneEntryScreen(
         OutlinedTextField(
             value = formattedPhone,
             onValueChange = { newValue ->
-                // Extract only digits, removing the +1 prefix
-                val digits = newValue.removePrefix("+1").filter { it.isDigit() }
+                // Extract only digits from input
+                val digits = newValue.filter { it.isDigit() }.take(10)
                 phone = digits
             },
-            placeholder = { Text("+1 234 567 8900") },
+            placeholder = { Text("(416) 886-3439") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Phone,
@@ -198,7 +206,7 @@ private fun PhoneEntryScreen(
             CircularProgressIndicator(color = Mustard)
         } else {
             Button(
-                onClick = { onSendOtp(formattedPhone) },
+                onClick = { onSendOtp(phoneWithCountryCode) },
                 enabled = phone.length == 10,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Mustard,
