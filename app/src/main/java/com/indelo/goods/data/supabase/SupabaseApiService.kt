@@ -97,6 +97,5 @@ data class User(
 )
 
 data class StorageUploadResponse(
-    val Key: String?,
     val key: String?
 )
