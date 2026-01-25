@@ -115,25 +115,22 @@ private fun PhoneEntryScreen(
     isLoading: Boolean,
     onSendOtp: (String) -> Unit
 ) {
-    var phone by rememberSaveable { mutableStateOf("") }
+    // Store only digits (no formatting)
+    var phoneDigits by rememberSaveable { mutableStateOf("") }
 
-    // Format phone number for display: (XXX) XXX-XXXX
-    val formattedPhone = remember(phone) {
-        val digits = phone.filter { it.isDigit() }.take(10)
-        when (digits.length) {
+    // Format for display: (XXX) XXX-XXXX
+    fun formatPhoneNumber(digits: String): String {
+        return when (digits.length) {
             0 -> ""
-            in 1..3 -> "(${digits}"
-            in 4..6 -> "(${digits.take(3)}) ${digits.drop(3)}"
-            in 7..10 -> "(${digits.take(3)}) ${digits.substring(3, 6)}-${digits.drop(6)}"
-            else -> "(${digits.take(3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}"
+            in 1..3 -> "($digits"
+            in 4..6 -> "(${digits.substring(0, 3)}) ${digits.substring(3)}"
+            in 7..10 -> "(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}"
+            else -> "(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}"
         }
     }
 
-    // Phone number with +1 prefix for sending to server
-    val phoneWithCountryCode = remember(phone) {
-        val digits = phone.filter { it.isDigit() }.take(10)
-        if (digits.isEmpty()) "" else "+1$digits"
-    }
+    val displayValue = formatPhoneNumber(phoneDigits)
+    val phoneWithCountryCode = if (phoneDigits.isEmpty()) "" else "+1$phoneDigits"
 
     Column(
         modifier = Modifier
@@ -180,11 +177,11 @@ private fun PhoneEntryScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = formattedPhone,
+            value = displayValue,
             onValueChange = { newValue ->
-                // Extract only digits from input
+                // Extract only digits from input, max 10 digits
                 val digits = newValue.filter { it.isDigit() }.take(10)
-                phone = digits
+                phoneDigits = digits
             },
             placeholder = { Text("(416) 886-3439") },
             singleLine = true,
@@ -207,7 +204,7 @@ private fun PhoneEntryScreen(
         } else {
             Button(
                 onClick = { onSendOtp(phoneWithCountryCode) },
-                enabled = phone.length == 10,
+                enabled = phoneDigits.length == 10,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Mustard,
                     contentColor = Charcoal,
