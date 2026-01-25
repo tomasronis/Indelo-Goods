@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.indelo.goods.data.model.Order
 import com.indelo.goods.data.model.OrderItem
 import com.indelo.goods.data.model.Product
+import com.indelo.goods.data.model.Shop
 import com.indelo.goods.data.repository.OrderRepository
+import com.indelo.goods.data.repository.ShopRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +24,10 @@ data class OrderCartItem(
 
 data class OrderState(
     val shopId: String? = null,
+    val shop: Shop? = null,
     val items: List<OrderCartItem> = emptyList(),
+    val deliveryAddress: String = "",
+    val notes: String = "",
     val isPlacingOrder: Boolean = false,
     val orderPlaced: Boolean = false,
     val error: String? = null
@@ -35,7 +40,8 @@ data class OrderState(
 }
 
 class OrderViewModel(
-    private val orderRepository: OrderRepository = OrderRepository()
+    private val orderRepository: OrderRepository = OrderRepository(),
+    private val shopRepository: ShopRepository = ShopRepository()
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OrderState())
@@ -43,6 +49,38 @@ class OrderViewModel(
 
     fun setShopId(shopId: String) {
         _state.update { it.copy(shopId = shopId) }
+        loadShop(shopId)
+    }
+
+    private fun loadShop(shopId: String) {
+        viewModelScope.launch {
+            val result = shopRepository.getShopById(shopId)
+            if (result.isSuccess) {
+                val shop = result.getOrNull()
+                _state.update { currentState ->
+                    // Pre-populate delivery address with shop's address
+                    val defaultAddress = buildString {
+                        shop?.address?.let { append(it).append("\n") }
+                        shop?.city?.let { append(it) }
+                        shop?.state?.let { if (shop.city != null) append(", ") else append(""); append(it) }
+                        shop?.zipCode?.let { append(" ").append(it) }
+                    }.trim()
+
+                    currentState.copy(
+                        shop = shop,
+                        deliveryAddress = if (defaultAddress.isNotBlank()) defaultAddress else currentState.deliveryAddress
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateDeliveryAddress(address: String) {
+        _state.update { it.copy(deliveryAddress = address) }
+    }
+
+    fun updateNotes(notes: String) {
+        _state.update { it.copy(notes = notes) }
     }
 
     fun addProduct(product: Product) {
@@ -112,13 +150,20 @@ class OrderViewModel(
                 return@launch
             }
 
+            if (currentState.deliveryAddress.isBlank()) {
+                _state.update { it.copy(error = "Delivery address is required") }
+                return@launch
+            }
+
             _state.update { it.copy(isPlacingOrder = true, error = null) }
 
             // Create the order
             val order = Order(
                 shopId = shopId,
                 totalAmount = currentState.totalAmount,
-                status = "pending"
+                status = "pending",
+                shippingAddress = currentState.deliveryAddress,
+                notes = currentState.notes.ifBlank { null }
             )
 
             // Create order items

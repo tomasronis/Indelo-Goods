@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -139,10 +141,15 @@ fun OrderScreen(
 
                 // Order summary and place order button
                 OrderSummary(
+                    shop = state.shop,
                     totalAmount = state.totalAmount,
                     totalItems = state.totalItems,
+                    deliveryAddress = state.deliveryAddress,
+                    notes = state.notes,
                     isPlacingOrder = state.isPlacingOrder,
                     error = state.error,
+                    onDeliveryAddressChange = { viewModel.updateDeliveryAddress(it) },
+                    onNotesChange = { viewModel.updateNotes(it) },
                     onPlaceOrder = { viewModel.placeOrder() }
                 )
             }
@@ -341,10 +348,15 @@ private fun OrderItemCard(
 
 @Composable
 private fun OrderSummary(
+    shop: com.indelo.goods.data.model.Shop?,
     totalAmount: Double,
     totalItems: Int,
+    deliveryAddress: String,
+    notes: String,
     isPlacingOrder: Boolean,
     error: String?,
+    onDeliveryAddressChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit,
     onPlaceOrder: () -> Unit
 ) {
     Card(
@@ -357,14 +369,72 @@ private fun OrderSummary(
                 .padding(16.dp)
         ) {
             Text(
-                text = "Order Summary",
+                text = "Order Confirmation",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Charcoal
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            shop?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = it.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Charcoal.copy(alpha = 0.7f)
+                )
+            }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Delivery Address
+            Text(
+                text = "Delivery Address *",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = deliveryAddress,
+                onValueChange = onDeliveryAddressChange,
+                placeholder = { Text("Enter delivery address") },
+                minLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Mustard,
+                    unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
+                    cursorColor = Ketchup,
+                    focusedLabelColor = Mustard
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Special Instructions / Notes
+            Text(
+                text = "Special Instructions (optional)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Charcoal
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = notes,
+                onValueChange = onNotesChange,
+                placeholder = { Text("Add delivery notes, special requests, etc.") },
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Mustard,
+                    unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
+                    cursorColor = Ketchup,
+                    focusedLabelColor = Mustard
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Order Summary
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -390,7 +460,7 @@ private fun OrderSummary(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Total:",
+                    text = "Order Total:",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Charcoal
@@ -432,7 +502,7 @@ private fun OrderSummary(
                     )
                 } else {
                     Text(
-                        text = "Place Order",
+                        text = "Confirm Order",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -442,7 +512,7 @@ private fun OrderSummary(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "You will receive a confirmation email once the producer accepts your order.",
+                text = "By placing this order, you confirm the delivery address and order details are accurate. The producer will review and confirm your order. Payment terms and invoicing will be arranged separately.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Charcoal.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
