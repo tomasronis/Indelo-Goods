@@ -154,7 +154,7 @@ fun AppNavigation(
         composable(Screen.ProducerHome.route) {
             android.util.Log.d("AppNavigation", "Loading ProducerHome screen")
             val context = LocalContext.current
-            val productViewModel: ProductViewModel = viewModel(
+            val productViewModel: ProductViewModel =  viewModel(
                 factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                         android.util.Log.d("AppNavigation", "Creating ProductViewModel with context: $context")
