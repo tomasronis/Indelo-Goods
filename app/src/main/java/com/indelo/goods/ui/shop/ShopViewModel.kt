@@ -1,6 +1,8 @@
 package com.indelo.goods.ui.shop
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.indelo.goods.data.model.Shop
 import com.indelo.goods.data.repository.AuthRepository
@@ -24,6 +26,7 @@ data class ShopFormState(
 )
 
 class ShopViewModel(
+    private val context: Context,
     private val shopRepository: ShopRepository = ShopRepository(),
     private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
@@ -35,7 +38,13 @@ class ShopViewModel(
     val formState: StateFlow<ShopFormState> = _formState.asStateFlow()
 
     init {
-        loadShops()
+        android.util.Log.d("ShopViewModel", "Initializing ShopViewModel, context=$context")
+        try {
+            loadShops()
+        } catch (e: Exception) {
+            android.util.Log.e("ShopViewModel", "Error during init", e)
+            _listState.update { it.copy(isLoading = false, error = e.message) }
+        }
     }
 
     fun loadShops() {
@@ -141,5 +150,16 @@ class ShopViewModel(
     fun clearError() {
         _listState.update { it.copy(error = null) }
         _formState.update { it.copy(error = null) }
+    }
+}
+
+// ViewModelFactory for ShopViewModel
+class ShopViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ShopViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ShopViewModel(context) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

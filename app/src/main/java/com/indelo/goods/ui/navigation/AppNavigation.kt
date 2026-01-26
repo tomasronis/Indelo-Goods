@@ -311,7 +311,15 @@ fun AppNavigation(
 
         // Shop screens
         composable(Screen.ShopHome.route) {
-            val shopViewModel: ShopViewModel = viewModel()
+            val context = LocalContext.current
+            val shopViewModel: ShopViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ShopViewModel(context) as T
+                    }
+                }
+            )
 
             ShopListScreen(
                 onSignOut = { authViewModel.signOut() },
@@ -324,7 +332,15 @@ fun AppNavigation(
         }
 
         composable(Screen.ShopCreate.route) {
-            val shopViewModel: ShopViewModel = viewModel()
+            val context = LocalContext.current
+            val shopViewModel: ShopViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        @Suppress("UNCHECKED_CAST")
+                        return ShopViewModel(context) as T
+                    }
+                }
+            )
             val formState by shopViewModel.formState.collectAsState()
 
             LaunchedEffect(formState.isSuccess) {
