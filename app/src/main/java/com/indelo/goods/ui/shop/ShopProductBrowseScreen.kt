@@ -286,7 +286,7 @@ private fun ProductCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Pricing
+            // Packaging info - FREE on consignment!
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -294,14 +294,14 @@ private fun ProductCard(
             ) {
                 Column {
                     Text(
-                        text = "$${product.wholesalePrice}",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "FREE",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Ketchup
                     )
                     Text(
-                        text = "per ${product.unitsPerCase} units",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = "${product.unitsPerCase} units/case",
+                        style = MaterialTheme.typography.bodySmall,
                         color = Charcoal.copy(alpha = 0.6f)
                     )
                 }

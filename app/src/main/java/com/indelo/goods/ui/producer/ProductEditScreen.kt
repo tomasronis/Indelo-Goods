@@ -2,6 +2,7 @@ package com.indelo.goods.ui.producer
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -57,7 +59,7 @@ fun ProductEditScreen(
     viewModel: ProductViewModel = viewModel()
 ) {
     val editState by viewModel.editState.collectAsState()
-    var formState by rememberSaveable { mutableStateOf(ProductFormState()) }
+    var formState by remember { mutableStateOf(ProductFormState()) }
     var currentStep by rememberSaveable { mutableIntStateOf(0) }
     var isInitialized by rememberSaveable { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -159,13 +161,15 @@ fun ProductEditScreen(
                 // Form content
                 AnimatedContent(
                     targetState = currentStep,
-                    label = "form_step"
+                    label = "form_step",
+                    modifier = Modifier.weight(1f)
                 ) { step ->
                     Column(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp)
                     ) {
                         when (steps[step]) {
                             ProductFormStep.BASIC_INFO -> BasicInfoStep(
@@ -195,14 +199,14 @@ fun ProductEditScreen(
                     }
                 }
 
-                // Navigation buttons
+                // Navigation buttons - fixed at bottom
                 EditNavigationButtons(
                     currentStep = currentStep,
                     totalSteps = steps.size,
                     isLoading = editState.isLoading && editState.product != null,
                     canProceed = when (steps[currentStep]) {
                         ProductFormStep.BASIC_INFO -> formState.name.isNotBlank()
-                        ProductFormStep.PRICING -> formState.wholesalePrice.isNotBlank()
+                        ProductFormStep.PRICING -> formState.retailPrice.isNotBlank()
                         else -> true
                     },
                     onBack = { if (currentStep > 0) currentStep-- },
@@ -227,18 +231,21 @@ private fun EditNavigationButtons(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Bun)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (currentStep > 0) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Charcoal
                 )
             ) {
-                Text("Back")
+                Text("Back", fontWeight = FontWeight.Bold)
             }
         } else {
             Spacer(modifier = Modifier.weight(1f))
@@ -246,7 +253,9 @@ private fun EditNavigationButtons(
 
         if (isLoading) {
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = Mustard)
@@ -255,7 +264,9 @@ private fun EditNavigationButtons(
             Button(
                 onClick = if (currentStep == totalSteps - 1) onSubmit else onNext,
                 enabled = canProceed,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (currentStep == totalSteps - 1) Ketchup else Mustard,
                     contentColor = if (currentStep == totalSteps - 1) Color.White else Charcoal

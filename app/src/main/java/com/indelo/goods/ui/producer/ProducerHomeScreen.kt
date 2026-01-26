@@ -358,14 +358,14 @@ private fun ProductCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             // Product image
             Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Mustard.copy(alpha = 0.3f)),
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Bun),
                 contentAlignment = Alignment.Center
             ) {
                 if (product.imageUrl != null) {
@@ -377,10 +377,8 @@ private fun ProductCard(
                     )
                 } else {
                     Text(
-                        text = product.name.take(2).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Charcoal
+                        text = "📦",
+                        style = MaterialTheme.typography.displaySmall
                     )
                 }
             }
@@ -393,63 +391,89 @@ private fun ProductCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Charcoal,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 product.brand?.let { brand ->
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = brand,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Charcoal.copy(alpha = 0.6f)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    PriceTag(
-                        label = "Wholesale",
-                        price = "$${String.format("%.2f", product.wholesalePrice)}"
-                    )
-                    product.retailPrice?.let { retail ->
-                        PriceTag(
-                            label = "Retail",
-                            price = "$${String.format("%.2f", retail)}"
+                // Retail price
+                product.retailPrice?.let { retail ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "$${String.format("%.2f", retail)}",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Ketchup
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "retail",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Charcoal.copy(alpha = 0.5f)
                         )
                     }
                 }
 
+                // Packaging info
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${product.unitsPerCase} units/case",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Charcoal.copy(alpha = 0.6f)
+                )
+
                 // Certification badges
                 val badges = buildList {
-                    if (product.isOrganic) add("🌿")
-                    if (product.isVegan) add("🌱")
-                    if (product.isGlutenFree) add("🌾")
+                    if (product.isOrganic) add("🌿 Organic")
+                    if (product.isVegan) add("🌱 Vegan")
+                    if (product.isGlutenFree) add("🌾 GF")
+                    if (product.isNonGmo) add("🧬 Non-GMO")
+                    if (product.isKosher) add("✡️ Kosher")
                 }
                 if (badges.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = badges.joinToString(" "), fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = badges.joinToString(" • "),
+                        fontSize = 11.sp,
+                        color = Charcoal.copy(alpha = 0.7f)
+                    )
                 }
             }
 
-            // QR Code Button
-            IconButton(onClick = { showQrDialog = true }) {
-                Icon(
-                    imageVector = Icons.Default.QrCode2,
-                    contentDescription = "Show QR Code",
-                    tint = Mustard
-                )
-            }
+            Spacer(modifier = Modifier.width(8.dp))
 
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = Ketchup.copy(alpha = 0.7f)
-                )
+            // Action buttons column
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(onClick = { showQrDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.QrCode2,
+                        contentDescription = "Show QR Code",
+                        tint = Mustard,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = Ketchup,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -464,22 +488,6 @@ private fun ProductCard(
     }
 }
 
-@Composable
-private fun PriceTag(label: String, price: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = "$label: ",
-            style = MaterialTheme.typography.labelSmall,
-            color = Charcoal.copy(alpha = 0.5f)
-        )
-        Text(
-            text = price,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = Ketchup
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

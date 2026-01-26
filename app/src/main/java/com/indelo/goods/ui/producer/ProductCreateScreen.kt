@@ -89,10 +89,7 @@ data class ProductFormState(
     // Specifications
     val volumeMl: String = "",
     val weightG: String = "",
-    val servingSize: String = "",
-    val servingsPerContainer: String = "",
     val shelfLifeDays: String = "",
-    val countryOfOrigin: String = "",
     val storageInstructions: String = "",
 
     // Ingredients
@@ -108,7 +105,6 @@ data class ProductFormState(
 
     // Inventory
     val sku: String = "",
-    val upc: String = "",
     val leadTimeDays: String = ""
 )
 
@@ -130,7 +126,7 @@ fun ProductCreateScreen(
     modifier: Modifier = Modifier
 ) {
     var currentStep by rememberSaveable { mutableIntStateOf(0) }
-    var formState by rememberSaveable { mutableStateOf(ProductFormState()) }
+    var formState by remember { mutableStateOf(ProductFormState()) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val steps = ProductFormStep.entries
 
@@ -176,13 +172,15 @@ fun ProductCreateScreen(
             // Form content
             AnimatedContent(
                 targetState = currentStep,
-                label = "form_step"
+                label = "form_step",
+                modifier = Modifier.weight(1f)
             ) { step ->
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp)
                 ) {
                     when (steps[step]) {
                         ProductFormStep.BASIC_INFO -> BasicInfoStep(
@@ -212,15 +210,15 @@ fun ProductCreateScreen(
                 }
             }
 
-            // Navigation buttons
+            // Navigation buttons - fixed at bottom
             NavigationButtons(
                 currentStep = currentStep,
                 totalSteps = steps.size,
                 isLoading = isLoading,
                 canProceed = when (steps[currentStep]) {
-                    ProductFormStep.BASIC_INFO -> formState.name.isNotBlank()
-                    ProductFormStep.PRICING -> formState.wholesalePrice.isNotBlank()
-                    else -> true
+                    ProductFormStep.PRICING -> formState.retailPrice.isNotBlank()
+                    ProductFormStep.REVIEW -> formState.name.isNotBlank() && formState.retailPrice.isNotBlank()
+                    else -> true  // Always allow proceeding from Basic Info
                 },
                 onBack = { if (currentStep > 0) currentStep-- },
                 onNext = { if (currentStep < steps.size - 1) currentStep++ },
@@ -311,18 +309,21 @@ private fun NavigationButtons(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Bun)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (currentStep > 0) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Charcoal
                 )
             ) {
-                Text("Back")
+                Text("Back", fontWeight = FontWeight.Bold)
             }
         } else {
             Spacer(modifier = Modifier.weight(1f))
@@ -330,7 +331,9 @@ private fun NavigationButtons(
 
         if (isLoading) {
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = Mustard)
@@ -339,14 +342,16 @@ private fun NavigationButtons(
             Button(
                 onClick = if (currentStep == totalSteps - 1) onSubmit else onNext,
                 enabled = canProceed,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (currentStep == totalSteps - 1) Ketchup else Mustard,
                     contentColor = if (currentStep == totalSteps - 1) Color.White else Charcoal
                 )
             ) {
                 Text(
-                    text = if (currentStep == totalSteps - 1) "Create Product" else "Next",
+                    text = if (currentStep == totalSteps - 1) "Publish" else "Next",
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -464,28 +469,19 @@ internal fun PricingStep(
     onFormStateChange: (ProductFormState) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionHeader(title = "Pricing & Packaging", subtitle = "Set your wholesale and retail prices")
+        SectionHeader(
+            title = "Pricing & Packaging",
+            subtitle = "Set your retail price - Indelo automatically adds 10% to cover platform fees"
+        )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FormTextField(
-                value = formState.wholesalePrice,
-                onValueChange = { onFormStateChange(formState.copy(wholesalePrice = it)) },
-                label = "Wholesale Price *",
-                placeholder = "0.00",
-                prefix = "$",
-                keyboardType = KeyboardType.Decimal,
-                modifier = Modifier.weight(1f)
-            )
-            FormTextField(
-                value = formState.retailPrice,
-                onValueChange = { onFormStateChange(formState.copy(retailPrice = it)) },
-                label = "Suggested Retail",
-                placeholder = "0.00",
-                prefix = "$",
-                keyboardType = KeyboardType.Decimal,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        FormTextField(
+            value = formState.retailPrice,
+            onValueChange = { onFormStateChange(formState.copy(retailPrice = it)) },
+            label = "Retail Price *",
+            placeholder = "0.00",
+            prefix = "$",
+            keyboardType = KeyboardType.Decimal
+        )
 
         SectionHeader(title = "Case Packaging", subtitle = "How products are packaged for wholesale")
 
@@ -547,32 +543,7 @@ internal fun SpecificationsStep(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FormTextField(
-                value = formState.servingSize,
-                onValueChange = { onFormStateChange(formState.copy(servingSize = it)) },
-                label = "Serving Size",
-                placeholder = "1 can (240ml)",
-                modifier = Modifier.weight(1f)
-            )
-            FormTextField(
-                value = formState.servingsPerContainer,
-                onValueChange = { onFormStateChange(formState.copy(servingsPerContainer = it)) },
-                label = "Servings",
-                placeholder = "1",
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        SectionHeader(title = "Origin & Storage", subtitle = "")
-
-        FormTextField(
-            value = formState.countryOfOrigin,
-            onValueChange = { onFormStateChange(formState.copy(countryOfOrigin = it)) },
-            label = "Country of Origin",
-            placeholder = "USA"
-        )
+        SectionHeader(title = "Storage & Shelf Life", subtitle = "")
 
         FormTextField(
             value = formState.shelfLifeDays,
@@ -589,25 +560,14 @@ internal fun SpecificationsStep(
             placeholder = "Store in a cool, dry place"
         )
 
-        SectionHeader(title = "Inventory Codes", subtitle = "For tracking and scanning")
+        SectionHeader(title = "Inventory Code", subtitle = "Optional SKU for tracking")
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FormTextField(
-                value = formState.sku,
-                onValueChange = { onFormStateChange(formState.copy(sku = it)) },
-                label = "SKU",
-                placeholder = "Your internal code",
-                modifier = Modifier.weight(1f)
-            )
-            FormTextField(
-                value = formState.upc,
-                onValueChange = { onFormStateChange(formState.copy(upc = it)) },
-                label = "UPC/Barcode",
-                placeholder = "12-digit code",
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        FormTextField(
+            value = formState.sku,
+            onValueChange = { onFormStateChange(formState.copy(sku = it)) },
+            label = "SKU",
+            placeholder = "Your internal code"
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -759,16 +719,17 @@ internal fun ReviewStep(formState: ProductFormState) {
         }
 
         ReviewCard(title = "Pricing") {
-            ReviewItem("Wholesale", "$${formState.wholesalePrice}")
-            ReviewItem("Retail (suggested)", if (formState.retailPrice.isBlank()) "—" else "$${formState.retailPrice}")
+            ReviewItem("Retail Price", if (formState.retailPrice.isBlank()) "—" else "$${formState.retailPrice}")
             ReviewItem("Units/Case", formState.unitsPerCase)
-            ReviewItem("Min Order", formState.minimumOrderQuantity)
+            ReviewItem("Min Order Quantity", formState.minimumOrderQuantity)
+            if (formState.leadTimeDays.isNotBlank()) {
+                ReviewItem("Lead Time", "${formState.leadTimeDays} days")
+            }
         }
 
         ReviewCard(title = "Specifications") {
             if (formState.volumeMl.isNotBlank()) ReviewItem("Volume", "${formState.volumeMl} ml")
             if (formState.weightG.isNotBlank()) ReviewItem("Weight", "${formState.weightG} g")
-            if (formState.countryOfOrigin.isNotBlank()) ReviewItem("Origin", formState.countryOfOrigin)
             if (formState.shelfLifeDays.isNotBlank()) ReviewItem("Shelf Life", "${formState.shelfLifeDays} days")
         }
 
@@ -892,7 +853,9 @@ private fun formTextFieldColors() = OutlinedTextFieldDefaults.colors(
     cursorColor = Ketchup,
     focusedLabelColor = Mustard,
     focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White
+    unfocusedContainerColor = Color.White,
+    focusedTextColor = Charcoal,
+    unfocusedTextColor = Charcoal
 )
 
 @Preview(showBackground = true)
