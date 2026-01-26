@@ -115,22 +115,7 @@ private fun PhoneEntryScreen(
     isLoading: Boolean,
     onSendOtp: (String) -> Unit
 ) {
-    // Store only digits (no formatting)
     var phoneDigits by rememberSaveable { mutableStateOf("") }
-
-    // Format for display: (XXX) XXX-XXXX
-    fun formatPhoneNumber(digits: String): String {
-        return when (digits.length) {
-            0 -> ""
-            in 1..3 -> "($digits"
-            in 4..6 -> "(${digits.substring(0, 3)}) ${digits.substring(3)}"
-            in 7..10 -> "(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}"
-            else -> "(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}"
-        }
-    }
-
-    val displayValue = formatPhoneNumber(phoneDigits)
-    val phoneWithCountryCode = if (phoneDigits.isEmpty()) "" else "+1$phoneDigits"
 
     Column(
         modifier = Modifier
@@ -176,26 +161,45 @@ private fun PhoneEntryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = displayValue,
-            onValueChange = { newValue ->
-                // Extract only digits from input, max 10 digits
-                val digits = newValue.filter { it.isDigit() }.take(10)
-                phoneDigits = digits
-            },
-            placeholder = { Text("(416) 886-3439") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone,
-                imeAction = ImeAction.Done
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Mustard,
-                unfocusedBorderColor = Charcoal,
-                cursorColor = Ketchup
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Fixed +1 prefix
+            Text(
+                text = "+1 ",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = Charcoal
+                ),
+                modifier = Modifier.padding(end = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = phoneDigits,
+                onValueChange = { newValue ->
+                    // Extract only digits, max 10
+                    phoneDigits = newValue.filter { it.isDigit() }.take(10)
+                },
+                placeholder = { Text("4168863439", color = Charcoal.copy(alpha = 0.4f)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Phone,
+                    imeAction = ImeAction.Done
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Mustard,
+                    unfocusedBorderColor = Charcoal,
+                    cursorColor = Ketchup,
+                    focusedTextColor = Charcoal,
+                    unfocusedTextColor = Charcoal
+                ),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -203,7 +207,7 @@ private fun PhoneEntryScreen(
             CircularProgressIndicator(color = Mustard)
         } else {
             Button(
-                onClick = { onSendOtp(phoneWithCountryCode) },
+                onClick = { onSendOtp("+1$phoneDigits") },
                 enabled = phoneDigits.length == 10,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Mustard,

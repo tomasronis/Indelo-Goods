@@ -631,5 +631,7 @@ private fun formTextFieldColors() = OutlinedTextFieldDefaults.colors(
     cursorColor = Ketchup,
     focusedLabelColor = Mustard,
     focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White
+    unfocusedContainerColor = Color.White,
+    focusedTextColor = Charcoal,
+    unfocusedTextColor = Charcoal
 )

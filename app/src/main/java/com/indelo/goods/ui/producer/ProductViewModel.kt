@@ -49,7 +49,12 @@ class ProductViewModel(
 
     init {
         android.util.Log.d("ProductViewModel", "Initializing ProductViewModel, context=$context")
-        loadProducerProducts()
+        try {
+            loadProducerProducts()
+        } catch (e: Exception) {
+            android.util.Log.e("ProductViewModel", "Error during init", e)
+            _listState.update { it.copy(isLoading = false, error = e.message) }
+        }
     }
 
     fun loadProducerProducts() {
@@ -238,21 +243,21 @@ class ProductViewModel(
 
 // Extension function to convert form state to Product
 private fun ProductFormState.toProduct(producerId: String, imageUrl: String? = null): Product {
+    val retail = retailPrice.toDoubleOrNull() ?: 0.0
+    val wholesale = retail * 1.10  // Add 10% platform fee
+
     return Product(
         name = name,
         brand = brand.ifBlank { null },
         shortDescription = shortDescription.ifBlank { null },
         description = description.ifBlank { null },
-        wholesalePrice = wholesalePrice.toDoubleOrNull() ?: 0.0,
-        retailPrice = retailPrice.toDoubleOrNull(),
+        wholesalePrice = wholesale,
+        retailPrice = retail,
         unitsPerCase = unitsPerCase.toIntOrNull() ?: 1,
         minimumOrderQuantity = minimumOrderQuantity.toIntOrNull() ?: 1,
         volumeMl = volumeMl.toIntOrNull(),
         weightG = weightG.toIntOrNull(),
-        servingSize = servingSize.ifBlank { null },
-        servingsPerContainer = servingsPerContainer.toIntOrNull(),
         shelfLifeDays = shelfLifeDays.toIntOrNull(),
-        countryOfOrigin = countryOfOrigin.ifBlank { null },
         storageInstructions = storageInstructions.ifBlank { null },
         ingredients = ingredients.ifBlank { null },
         allergens = allergens.ifBlank { null },
@@ -262,7 +267,6 @@ private fun ProductFormState.toProduct(producerId: String, imageUrl: String? = n
         isGlutenFree = isGlutenFree,
         isKosher = isKosher,
         sku = sku.ifBlank { null },
-        upc = upc.ifBlank { null },
         leadTimeDays = leadTimeDays.toIntOrNull(),
         producerId = producerId,
         imageUrl = imageUrl
@@ -277,16 +281,13 @@ fun Product.toFormState(): ProductFormState {
         shortDescription = shortDescription ?: "",
         description = description ?: "",
         category = "", // TODO: Map category_id to category name
-        wholesalePrice = wholesalePrice.toString(),
+        wholesalePrice = "", // Not shown in form - calculated automatically
         retailPrice = retailPrice?.toString() ?: "",
         unitsPerCase = unitsPerCase.toString(),
         minimumOrderQuantity = minimumOrderQuantity.toString(),
         volumeMl = volumeMl?.toString() ?: "",
         weightG = weightG?.toString() ?: "",
-        servingSize = servingSize ?: "",
-        servingsPerContainer = servingsPerContainer?.toString() ?: "",
         shelfLifeDays = shelfLifeDays?.toString() ?: "",
-        countryOfOrigin = countryOfOrigin ?: "",
         storageInstructions = storageInstructions ?: "",
         ingredients = ingredients ?: "",
         allergens = allergens ?: "",
@@ -296,7 +297,6 @@ fun Product.toFormState(): ProductFormState {
         isGlutenFree = isGlutenFree,
         isKosher = isKosher,
         sku = sku ?: "",
-        upc = upc ?: "",
         leadTimeDays = leadTimeDays?.toString() ?: ""
     )
 }
