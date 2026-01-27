@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,6 +77,7 @@ fun ProducerHomeScreen(
     onViewSales: () -> Unit = {},
     onViewInventory: () -> Unit = {},
     onViewPayouts: () -> Unit = {},
+    onEditProfile: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProductViewModel = viewModel()
 ) {
@@ -92,6 +94,13 @@ fun ProducerHomeScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onEditProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Edit Profile",
+                            tint = Charcoal
+                        )
+                    }
                     IconButton(onClick = onSignOut) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,

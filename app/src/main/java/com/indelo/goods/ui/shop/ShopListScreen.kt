@@ -60,8 +60,8 @@ fun ShopListScreen(
     onSignOut: () -> Unit,
     onCreateShop: () -> Unit,
     onShopClick: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: ShopViewModel = viewModel()
+    viewModel: ShopViewModel,
+    modifier: Modifier = Modifier
 ) {
     val listState by viewModel.listState.collectAsState()
 

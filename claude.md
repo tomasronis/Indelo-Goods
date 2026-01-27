@@ -535,7 +535,10 @@ CREATE INDEX idx_monthly_selections_month ON monthly_product_selections(subscrip
 ### Shopping Cart & Checkout
 - [x] Shopping cart functionality (add, remove, update quantity)
 - [x] Checkout screen with cart summary
-- [ ] Stripe payment integration
+- [x] Web checkout UI with quantity selector and email input
+- [x] "Purchase Here" button on product web pages
+- [x] Checkout modal with payment breakdown (90% producer, 4.5% shop, 5.5% platform)
+- [ ] Stripe payment integration (checkout UI ready, needs API integration)
 - [ ] Order management
 - [ ] Order history
 
@@ -544,7 +547,7 @@ CREATE INDEX idx_monthly_selections_month ON monthly_product_selections(subscrip
 - [x] Universal links support (`https://indelogoods.com/product/{id}`)
 - [x] QR code generation with ZXing
 - [x] Public product pages (accessible via QR scan)
-- [ ] Web frontend for universal links
+- [x] Web frontend for universal links (Next.js app in `web/` directory)
 
 ### Shop B2B Ordering
 - [x] Create and manage multiple shop locations
@@ -577,6 +580,8 @@ CREATE INDEX idx_monthly_selections_month ON monthly_product_selections(subscrip
 - [x] Payout history screen (placeholder - ready for Stripe Connect)
 - [x] Subscription management screen (placeholder - ready for Stripe billing)
 - [x] Navigation from producer home to all dashboard features
+- [x] Producer profile creation/editing (company info, bio, background, inspiration, goals)
+- [x] Producer profile link on product web pages
 - [ ] Implement inventory tracking (count delivered orders by shop)
 - [ ] Implement sales analytics (integrate with shopper purchase data)
 - [ ] Implement Stripe Connect for payouts

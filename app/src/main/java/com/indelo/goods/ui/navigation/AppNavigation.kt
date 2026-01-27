@@ -31,6 +31,7 @@ import com.indelo.goods.ui.producer.ProducerPayoutsScreen
 import com.indelo.goods.ui.producer.ProducerSubscriptionScreen
 import com.indelo.goods.ui.public.ProductDetailScreen
 import com.indelo.goods.ui.public.ProducerProfileScreen
+import com.indelo.goods.ui.producer.ProducerProfileEditScreen
 import com.indelo.goods.ui.shop.OrderViewModel
 import com.indelo.goods.ui.shop.OrderScreen
 import com.indelo.goods.ui.shop.ProductBrowseViewModel
@@ -51,6 +52,7 @@ sealed class Screen(val route: String) {
 
     // Producer screens
     data object ProducerHome : Screen("producer/home")
+    data object ProducerProfileEdit : Screen("producer/profile/edit")
     data object ProducerOrders : Screen("producer/orders")
     data object ProducerSales : Screen("producer/sales")
     data object ProducerInventory : Screen("producer/inventory")
@@ -174,7 +176,14 @@ fun AppNavigation(
                 onViewSales = { navController.navigate(Screen.ProducerSales.route) },
                 onViewInventory = { navController.navigate(Screen.ProducerInventory.route) },
                 onViewPayouts = { navController.navigate(Screen.ProducerPayouts.route) },
+                onEditProfile = { navController.navigate(Screen.ProducerProfileEdit.route) },
                 viewModel = productViewModel
+            )
+        }
+
+        composable(Screen.ProducerProfileEdit.route) {
+            ProducerProfileEditScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

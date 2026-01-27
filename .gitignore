@@ -109,3 +109,11 @@ coverage/
 *.gcov
 *.gcda
 *.gcno
+
+# Web frontend (Next.js)
+web/node_modules/
+web/.next/
+web/out/
+web/.vercel/
+web/*.tsbuildinfo
+web/next-env.d.ts

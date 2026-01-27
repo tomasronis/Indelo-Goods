@@ -129,6 +129,16 @@ Indelo-Goods/
 └── gradle.properties
 ```
 
+## Web Frontend
+
+The `web/` directory contains a Next.js web frontend for product QR code pages.
+
+When users scan a product QR code:
+- **With the app installed**: Deep links directly to the Android app
+- **Without the app**: Shows a beautiful product detail page with download option
+
+See [web/README.md](web/README.md) for setup instructions and [web/DEPLOYMENT.md](web/DEPLOYMENT.md) for deployment guide.
+
 ## Features
 
 - User authentication (sign up, sign in, sign out)

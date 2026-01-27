@@ -96,8 +96,8 @@ fun ShopCreateScreen(
     isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    var currentStep by rememberSaveable { mutableIntStateOf(0) }
-    var formState by rememberSaveable { mutableStateOf(ShopFormData()) }
+    var currentStep by remember { mutableIntStateOf(0) }
+    var formState by remember { mutableStateOf(ShopFormData()) }
     val steps = ShopFormStep.entries
 
     Scaffold(
@@ -267,6 +267,7 @@ private fun NavigationButtons(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(if (currentStep == totalSteps - 1) Bun else Color.Transparent)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -298,12 +299,16 @@ private fun NavigationButtons(
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (currentStep == totalSteps - 1) Ketchup else Mustard,
-                    contentColor = if (currentStep == totalSteps - 1) Color.White else Charcoal
-                )
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
                     text = if (currentStep == totalSteps - 1) "Create Shop" else "Next",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
         }
