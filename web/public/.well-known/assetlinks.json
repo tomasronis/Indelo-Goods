@@ -4,8 +4,7 @@
     "namespace": "android_app",
     "package_name": "com.indelo.goods",
     "sha256_cert_fingerprints": [
-      "YOUR_DEBUG_SHA256_FINGERPRINT_HERE",
-      "YOUR_RELEASE_SHA256_FINGERPRINT_HERE"
+      "CA:C1:2B:5D:30:E1:EF:B3:2A:63:A8:24:D3:4D:E9:8B:5B:25:4F:9B:4A:30:74:EA:13:C3:9E:C5:C3:07:B5:AE"
     ]
   }
 }]
