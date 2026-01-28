@@ -1,4 +1,8 @@
 {
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/_next/*", "/api/*", "/.well-known/*", "/images/*", "/*.{css,js,json,ico,png,jpg,jpeg,gif,svg,woff,woff2,ttf,eot}"]
+  },
   "routes": [
     {
       "route": "/.well-known/*",
@@ -7,12 +11,7 @@
       }
     }
   ],
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/_next/*", "/api/*", "/.well-known/*", "/images/*", "/*.{css,js,json,ico,png,jpg,jpeg,gif,svg,woff,woff2,ttf,eot}"]
-  },
   "platform": {
     "apiRuntime": "node:18"
-  },
-  "trailingSlash": "auto"
+  }
 }
