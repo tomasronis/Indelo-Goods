@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Lazy initialization - only create client when needed (not at build time)
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  return createClient(supabaseUrl, supabaseAnonKey)
+}
 
 export interface Product {
   id: string
@@ -62,6 +64,7 @@ export interface ProducerProfile {
 }
 
 export async function getProduct(productId: string): Promise<Product | null> {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -77,6 +80,7 @@ export async function getProduct(productId: string): Promise<Product | null> {
 }
 
 export async function getProducerProfile(producerId: string): Promise<ProducerProfile | null> {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('producer_profiles')
     .select('*')
