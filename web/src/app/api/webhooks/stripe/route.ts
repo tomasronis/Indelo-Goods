@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-12-15.clover',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
-
 export async function POST(req: NextRequest) {
+  // Initialize Stripe only when route is called (not at build time)
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-12-15.clover',
+  })
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
+
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')
 
