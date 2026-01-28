@@ -117,3 +117,7 @@ web/out/
 web/.vercel/
 web/*.tsbuildinfo
 web/next-env.d.ts
+
+# Editor and AI assistant directories
+.claude/
+.cursor/

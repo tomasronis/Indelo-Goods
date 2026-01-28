@@ -40,7 +40,7 @@ fun QrCodeDialog(
 ) {
     val qrCodeBitmap = remember(productId) {
         QrCodeGenerator.generateQrCode(
-            QrCodeGenerator.generateProductDeepLink(productId),
+            QrCodeGenerator.generateProductWebUrl(productId),
             size = 512
         )
     }
