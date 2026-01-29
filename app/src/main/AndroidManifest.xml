@@ -39,14 +39,14 @@
                     android:host="product" />
             </intent-filter>
 
-            <!-- Universal link intent filter for https://indelogoods.com -->
+            <!-- Universal link intent filter for Azure App Service domain -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="indelogoods.com"
+                    android:host="indelo-goods-frcreegxbnftaueh.canadacentral-01.azurewebsites.net"
                     android:pathPrefix="/product" />
             </intent-filter>
         </activity>

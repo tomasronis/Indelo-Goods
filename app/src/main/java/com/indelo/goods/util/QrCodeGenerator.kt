@@ -42,6 +42,6 @@ object QrCodeGenerator {
      * @return The web URL for the product
      */
     fun generateProductWebUrl(productId: String): String {
-        return "https://indelogoods.com/product/$productId"
+        return "https://indelo-goods-frcreegxbnftaueh.canadacentral-01.azurewebsites.net/product/$productId"
     }
 }
