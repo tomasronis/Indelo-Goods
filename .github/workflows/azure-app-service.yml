@@ -37,11 +37,13 @@ jobs:
           cd web
           npm run build
 
-          # Copy standalone server
+          # Create output directory
+          mkdir -p ./deploy-output/.next
+
+          # Copy standalone server files
           cp -r .next/standalone/* ./deploy-output/
 
-          # Copy static assets to the right location
-          mkdir -p ./deploy-output/.next
+          # Copy static assets
           cp -r .next/static ./deploy-output/.next/static
 
           # Copy public folder
