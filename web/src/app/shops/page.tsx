@@ -128,9 +128,12 @@ export default function ShopsPage() {
                 )}
 
                 {/* View Button */}
-                <button className="w-full py-2 px-4 bg-ketchup text-white font-bold hover:bg-ketchup/90 transition-colors">
+                <Link
+                  href={`/shop/${shop.id}`}
+                  className="block w-full py-2 px-4 bg-ketchup text-white font-bold hover:bg-ketchup/90 transition-colors text-center"
+                >
                   View Shop
-                </button>
+                </Link>
               </div>
             ))}
           </div>
