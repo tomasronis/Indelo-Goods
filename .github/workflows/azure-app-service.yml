@@ -3,7 +3,7 @@ name: Build and deploy Node.js app to Azure Web App
 on:
   push:
     branches:
-      - claude/add-documentation-guidelines-2S8uq
+      - claude/main-branch
       - claude/setup-android-app-uAKTv
       - main
   workflow_dispatch:
