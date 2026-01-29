@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: indelo-goods    # Set this to your app name
-  AZURE_WEBAPP_PACKAGE_PATH: './web' # Set this to the path to your web app project
-  NODE_VERSION: '20.x'                # Set this to the node version to use
+  AZURE_WEBAPP_NAME: indelo-goods
+  AZURE_WEBAPP_PACKAGE_PATH: './web'
+  NODE_VERSION: '20.x'
 
 jobs:
   build:
@@ -32,33 +32,33 @@ jobs:
           cd web
           npm ci
 
-      - name: Build Next.js app (standalone)
+      - name: Build Next.js app
         run: |
           cd web
           npm run build
-
-          # Create output directory
-          mkdir -p ./deploy-output/.next
-
-          # Copy standalone server files
-          cp -r .next/standalone/* ./deploy-output/
-
-          # Copy static assets
-          cp -r .next/static ./deploy-output/.next/static
-
-          # Copy public folder
-          cp -r public ./deploy-output/public
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
-      - name: Upload artifact for deployment job
+      - name: Remove Oryx files
+        run: |
+          cd web
+          rm -f oryx-manifest.toml
+          rm -f .oryx_*
+          rm -f node_modules.tar.gz
+
+      - name: Create deployment package
+        run: |
+          cd web
+          zip -r ../deploy.zip .next node_modules package.json package-lock.json next.config.js public src
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./web/deploy-output
+          path: deploy.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -68,16 +68,19 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
 
-      - name: 'Deploy to Azure Web App'
+      - name: Unzip deployment package
+        run: unzip deploy.zip -d ./app
+
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: ./app
