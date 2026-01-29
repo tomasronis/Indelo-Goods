@@ -13,7 +13,11 @@ import {
 } from '@stripe/react-stripe-js'
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+if (!stripeKey) {
+  console.error('Stripe publishable key is missing!')
+}
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null
 
 interface Props {
   product: Product
@@ -272,6 +276,7 @@ function CheckoutModal({ product, quantity, onQuantityChange, onClose, producerP
   const [email, setEmail] = useState('')
   const [clientSecret, setClientSecret] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const unitPrice = product.retail_price || product.wholesale_price
   const total = unitPrice * quantity
@@ -296,6 +301,7 @@ function CheckoutModal({ product, quantity, onQuantityChange, onClose, producerP
     }
 
     setIsLoading(true)
+    setError('')
 
     try {
       const response = await fetch('/api/create-payment-intent', {
@@ -318,7 +324,8 @@ function CheckoutModal({ product, quantity, onQuantityChange, onClose, producerP
       setClientSecret(data.clientSecret)
     } catch (error: any) {
       console.error('Payment intent error:', error)
-      alert('Error: ' + error.message)
+      const errorMsg = error.message || 'Failed to initialize payment. Please try again.'
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }
@@ -413,6 +420,13 @@ function CheckoutModal({ product, quantity, onQuantityChange, onClose, producerP
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border-2 border-red-500 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Email Input */}
         {!clientSecret ? (
           <form onSubmit={handleEmailSubmit} className="mb-6">
@@ -456,13 +470,19 @@ function CheckoutModal({ product, quantity, onQuantityChange, onClose, producerP
             </div>
 
             {/* Stripe Payment Form */}
-            <Elements stripe={stripePromise} options={options}>
-              <PaymentForm
-                product={product}
-                email={email}
-                onSuccess={onClose}
-              />
-            </Elements>
+            {stripePromise ? (
+              <Elements stripe={stripePromise} options={options}>
+                <PaymentForm
+                  product={product}
+                  email={email}
+                  onSuccess={onClose}
+                />
+              </Elements>
+            ) : (
+              <div className="p-4 bg-red-100 border-2 border-red-500 text-red-700 text-sm">
+                Stripe is not configured. Please contact support.
+              </div>
+            )}
           </>
         )}
 
