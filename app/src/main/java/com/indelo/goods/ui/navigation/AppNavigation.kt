@@ -37,6 +37,7 @@ import com.indelo.goods.ui.shop.OrderScreen
 import com.indelo.goods.ui.shop.ProductBrowseViewModel
 import com.indelo.goods.ui.shop.ShopCreateScreen
 import com.indelo.goods.ui.shop.ShopListScreen
+import com.indelo.goods.ui.shop.ShopOrderHistoryScreen
 import com.indelo.goods.ui.shop.ShopProductBrowseScreen
 import com.indelo.goods.ui.shop.ShopViewModel
 import com.indelo.goods.ui.shopper.ShopperHomeScreen
@@ -82,6 +83,9 @@ sealed class Screen(val route: String) {
     }
     data object ShopOrder : Screen("shop/{shopId}/order") {
         fun createRoute(shopId: String) = "shop/$shopId/order"
+    }
+    data object ShopOrderHistory : Screen("shop/{shopId}/order-history") {
+        fun createRoute(shopId: String) = "shop/$shopId/order-history"
     }
 
     // Shopper screens
@@ -336,6 +340,9 @@ fun AppNavigation(
                 onShopClick = { shopId ->
                     navController.navigate(Screen.ShopProductBrowse.createRoute(shopId))
                 },
+                onViewOrderHistory = { shopId ->
+                    navController.navigate(Screen.ShopOrderHistory.createRoute(shopId))
+                },
                 viewModel = shopViewModel
             )
         }
@@ -374,7 +381,9 @@ fun AppNavigation(
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("shopId") ?: return@composable
             val productBrowseViewModel: ProductBrowseViewModel = viewModel()
-            val orderViewModel: OrderViewModel = viewModel()
+            // Share OrderViewModel across shop screens by scoping to ShopHome
+            val shopHomeEntry = navController.getBackStackEntry(Screen.ShopHome.route)
+            val orderViewModel: OrderViewModel = viewModel(viewModelStoreOwner = shopHomeEntry)
 
             ShopProductBrowseScreen(
                 shopId = shopId,
@@ -382,8 +391,11 @@ fun AppNavigation(
                 onNavigateToCart = {
                     navController.navigate(Screen.ShopOrder.createRoute(shopId))
                 },
-                onAddToCart = { product ->
-                    orderViewModel.addProduct(product)
+                onNavigateToProductDetails = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
+                },
+                onAddToCart = { product, quantity ->
+                    orderViewModel.addProduct(product, quantity)
                 },
                 viewModel = productBrowseViewModel
             )
@@ -394,18 +406,34 @@ fun AppNavigation(
             arguments = listOf(navArgument("shopId") { type = NavType.StringType })
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("shopId") ?: return@composable
-            val orderViewModel: OrderViewModel = viewModel()
+            // Share OrderViewModel across shop screens by scoping to ShopHome
+            val shopHomeEntry = navController.getBackStackEntry(Screen.ShopHome.route)
+            val orderViewModel: OrderViewModel = viewModel(viewModelStoreOwner = shopHomeEntry)
 
             OrderScreen(
                 shopId = shopId,
                 onNavigateBack = { navController.popBackStack() },
                 onOrderPlaced = {
+                    // Clear cart after successful order
+                    orderViewModel.clearCart()
                     // Navigate back to shop list after successful order
                     navController.navigate(Screen.ShopHome.route) {
                         popUpTo(Screen.ShopHome.route) { inclusive = true }
                     }
                 },
                 viewModel = orderViewModel
+            )
+        }
+
+        composable(
+            route = Screen.ShopOrderHistory.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: return@composable
+
+            ShopOrderHistoryScreen(
+                shopId = shopId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

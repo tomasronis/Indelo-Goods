@@ -79,6 +79,17 @@ data class Order(
     // Notes
     val notes: String? = null,
 
+    // Delivery Confirmation (dual confirmation required)
+    @SerialName("shop_confirmed_delivery")
+    @SerializedName("shop_confirmed_delivery")
+    val shopConfirmedDelivery: Boolean = false,
+    @SerialName("producer_confirmed_delivery")
+    @SerializedName("producer_confirmed_delivery")
+    val producerConfirmedDelivery: Boolean = false,
+    @SerialName("estimated_delivery_date")
+    @SerializedName("estimated_delivery_date")
+    val estimatedDeliveryDate: String? = null,
+
     // Metadata
     @SerialName("created_at")
     @SerializedName("created_at")
@@ -89,7 +100,11 @@ data class Order(
     @SerialName("fulfilled_at")
     @SerializedName("fulfilled_at")
     val fulfilledAt: String? = null
-)
+) {
+    // Helper property to check if both parties confirmed delivery
+    val isFullyDelivered: Boolean
+        get() = shopConfirmedDelivery && producerConfirmedDelivery
+}
 
 @Serializable
 data class OrderItem(

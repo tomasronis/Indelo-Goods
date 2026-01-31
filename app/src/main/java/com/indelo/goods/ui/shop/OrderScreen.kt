@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -35,14 +36,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -73,10 +79,54 @@ fun OrderScreen(
         viewModel.setShopId(shopId)
     }
 
-    LaunchedEffect(state.orderPlaced) {
-        if (state.orderPlaced) {
-            onOrderPlaced()
-        }
+    // Show success dialog when order is placed
+    if (state.orderPlaced) {
+        AlertDialog(
+            onDismissRequest = { /* Prevent dismissal without clicking button */ },
+            title = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    DancingHotdog(
+                        modifier = Modifier.size(80.dp),
+                        pixelSize = 4f
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Order Confirmed!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Charcoal
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = "Thank you! Your wholesale order has been confirmed and sent to the producer. You'll receive your products in ${state.estimatedLeadTimeDays} days.\n\nRemember: No payment required! You'll earn 4.5% when shoppers scan your QR codes.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Charcoal.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = onOrderPlaced,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Mustard,
+                        contentColor = Charcoal
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Done",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = Color.White,
+            tonalElevation = 0.dp
+        )
     }
 
     Scaffold(
@@ -144,6 +194,7 @@ fun OrderScreen(
                     shop = state.shop,
                     totalAmount = state.totalAmount,
                     totalItems = state.totalItems,
+                    estimatedLeadTimeDays = state.estimatedLeadTimeDays,
                     deliveryAddress = state.deliveryAddress,
                     notes = state.notes,
                     isPlacingOrder = state.isPlacingOrder,
@@ -271,9 +322,10 @@ private fun OrderItemCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "$${cartItem.product.wholesalePrice} per ${cartItem.product.unitsPerCase} units",
+                    text = "${cartItem.quantity} units",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Charcoal.copy(alpha = 0.7f)
+                    color = Charcoal.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -283,17 +335,20 @@ private fun OrderItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val isAtMinimum = cartItem.quantity <= cartItem.product.minimumOrderQuantity
+
                     IconButton(
                         onClick = { onQuantityChange(cartItem.quantity - 1) },
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(Bun)
+                            .background(if (isAtMinimum) Bun.copy(alpha = 0.3f) else Bun),
+                        enabled = !isAtMinimum
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
                             contentDescription = "Decrease",
-                            tint = Charcoal,
+                            tint = if (isAtMinimum) Charcoal.copy(alpha = 0.3f) else Charcoal,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -321,16 +376,6 @@ private fun OrderItemCard(
                             modifier = Modifier.size(16.dp)
                         )
                     }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Subtotal
-                    Text(
-                        text = "$${String.format("%.2f", cartItem.subtotal)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Ketchup
-                    )
                 }
             }
 
@@ -351,6 +396,7 @@ private fun OrderSummary(
     shop: com.indelo.goods.data.model.Shop?,
     totalAmount: Double,
     totalItems: Int,
+    estimatedLeadTimeDays: Int,
     deliveryAddress: String,
     notes: String,
     isPlacingOrder: Boolean,
@@ -359,6 +405,9 @@ private fun OrderSummary(
     onNotesChange: (String) -> Unit,
     onPlaceOrder: () -> Unit
 ) {
+    var isAddressFocused by remember { mutableStateOf(false) }
+    var isNotesFocused by remember { mutableStateOf(false) }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier.fillMaxWidth()
@@ -393,13 +442,23 @@ private fun OrderSummary(
                 fontWeight = FontWeight.Bold,
                 color = Charcoal
             )
+            Text(
+                text = "(Confirm or edit your shop's address)",
+                style = MaterialTheme.typography.bodySmall,
+                color = Charcoal.copy(alpha = 0.6f)
+            )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = deliveryAddress,
                 onValueChange = onDeliveryAddressChange,
                 placeholder = { Text("Enter delivery address") },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth(),
+                singleLine = !isAddressFocused,
+                maxLines = if (isAddressFocused) 3 else 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        isAddressFocused = focusState.isFocused
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Mustard,
                     unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
@@ -422,8 +481,13 @@ private fun OrderSummary(
                 value = notes,
                 onValueChange = onNotesChange,
                 placeholder = { Text("Add delivery notes, special requests, etc.") },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
+                singleLine = !isNotesFocused,
+                maxLines = if (isNotesFocused) 2 else 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        isNotesFocused = focusState.isFocused
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Mustard,
                     unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
@@ -454,26 +518,27 @@ private fun OrderSummary(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Estimated delivery lead time
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Order Total:",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Charcoal
+                    text = "Estimated delivery:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Charcoal.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "$${String.format("%.2f", totalAmount)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Ketchup
+                    text = "$estimatedLeadTimeDays days",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Mustard
                 )
             }
 
             if (error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = error,

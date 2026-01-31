@@ -1,6 +1,7 @@
 package com.indelo.goods.ui.shop
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,10 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,14 +33,28 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,17 +79,21 @@ fun ShopProductBrowseScreen(
     shopId: String,
     onNavigateBack: () -> Unit,
     onNavigateToCart: () -> Unit,
-    onAddToCart: (Product) -> Unit,
+    onNavigateToProductDetails: (String) -> Unit,
+    onAddToCart: (Product, Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProductBrowseViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(shopId) {
         viewModel.loadProductsForShop(shopId)
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -155,23 +176,96 @@ fun ShopProductBrowseScreen(
                 )
             }
             else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                var isSearchFocused by remember { mutableStateOf(false) }
+
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(innerPadding)
                 ) {
-                    items(
-                        items = state.products,
-                        key = { it.id ?: it.name }
-                    ) { product ->
-                        ProductCard(
-                            product = product,
-                            onAddToCart = { onAddToCart(product) }
-                        )
+                    // AI Search Bar - expands when focused
+                    TextField(
+                        value = state.searchQuery,
+                        onValueChange = { query ->
+                            if (query.isBlank()) {
+                                viewModel.clearSearch()
+                            } else {
+                                viewModel.searchWithAI(query)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .onFocusChanged { focusState ->
+                                isSearchFocused = focusState.isFocused
+                            },
+                        placeholder = {
+                            Text("Ask AI: \"organic drinks\" or \"gluten-free snacks\"...")
+                        },
+                        leadingIcon = {
+                            if (state.isSearching) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Mustard,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                    tint = Charcoal
+                                )
+                            }
+                        },
+                        trailingIcon = {
+                            if (state.searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.clearSearch() }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Clear search",
+                                        tint = Charcoal
+                                    )
+                                }
+                            }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Mustard,
+                            unfocusedIndicatorColor = Charcoal.copy(alpha = 0.3f),
+                            cursorColor = Ketchup
+                        ),
+                        singleLine = !isSearchFocused,
+                        maxLines = if (isSearchFocused) 3 else 1,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    // Product Grid
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = state.products,
+                            key = { it.id ?: it.name }
+                        ) { product ->
+                            ProductCard(
+                                product = product,
+                                onProductClick = { onNavigateToProductDetails(product.id ?: "") },
+                                onAddToCart = { quantity ->
+                                    onAddToCart(product, quantity)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Added ${product.name} (${quantity} units) to cart",
+                                            duration = androidx.compose.material3.SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -225,14 +319,20 @@ private fun EmptyProductsState(
 @Composable
 private fun ProductCard(
     product: Product,
-    onAddToCart: () -> Unit
+    onProductClick: () -> Unit,
+    onAddToCart: (Int) -> Unit
 ) {
+    var quantity by remember {
+        mutableIntStateOf(product.minimumOrderQuantity)
+    }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Product image
+            // Product image - clickable to view details
             if (product.imageUrl != null) {
                 AsyncImage(
                     model = product.imageUrl,
@@ -241,7 +341,8 @@ private fun ProductCard(
                         .fillMaxWidth()
                         .height(120.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Bun),
+                        .background(Bun)
+                        .clickable { onProductClick() },
                     contentScale = ContentScale.Crop
                 )
             } else {
@@ -250,7 +351,8 @@ private fun ProductCard(
                         .fillMaxWidth()
                         .height(120.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Bun),
+                        .background(Bun)
+                        .clickable { onProductClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -262,7 +364,7 @@ private fun ProductCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Product name
+            // Product name - clickable to view details
             Text(
                 text = product.name,
                 style = MaterialTheme.typography.titleSmall,
@@ -270,7 +372,8 @@ private fun ProductCard(
                 color = Charcoal,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                minLines = 2
+                minLines = 2,
+                modifier = Modifier.clickable { onProductClick() }
             )
 
             // Brand
@@ -284,50 +387,80 @@ private fun ProductCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Packaging info - FREE on consignment!
+            // Quantity selector - centered and larger
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
-                Column {
-                    Text(
-                        text = "FREE",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Ketchup
+                // Decrease button
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(if (quantity > product.minimumOrderQuantity) Bun else Bun.copy(alpha = 0.3f))
+                        .clickable(enabled = quantity > product.minimumOrderQuantity) {
+                            quantity--
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Remove,
+                        contentDescription = "Decrease quantity",
+                        tint = if (quantity > product.minimumOrderQuantity) Charcoal else Charcoal.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp)
                     )
-                    Text(
-                        text = "${product.unitsPerCase} units/case",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Charcoal.copy(alpha = 0.6f)
+                }
+
+                // Quantity display
+                Text(
+                    text = "$quantity",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Charcoal,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                // Increase button
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Mustard)
+                        .clickable { quantity++ },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Increase quantity",
+                        tint = Charcoal,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Add to cart button
+            // Add to cart button (full width at bottom)
             Button(
-                onClick = onAddToCart,
+                onClick = {
+                    onAddToCart(quantity)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Mustard,
-                    contentColor = Charcoal
-                )
+                    containerColor = Ketchup,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Add",
+                    text = "Add to Cart",
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
         }

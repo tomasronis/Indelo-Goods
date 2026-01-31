@@ -4,24 +4,44 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Background circle -->
+
+    <!-- Background circle with Mustard color -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,27
-        C68.91,27 81,39.09 81,54
-        C81,68.91 68.91,81 54,81
-        C39.09,81 27,68.91 27,54
-        C27,39.09 39.09,27 54,27Z" />
-    <!-- Letter "I" for Indelo -->
+        android:fillColor="#F4C430"
+        android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"/>
+
+    <!-- Hotdog body (Ketchup red) -->
     <path
-        android:fillColor="#1976D2"
-        android:pathData="M48,40h12v28h-12z" />
-    <!-- Top bar of I -->
+        android:fillColor="#E63946"
+        android:pathData="M30,48 L78,48 Q82,48 82,52 L82,56 Q82,60 78,60 L30,60 Q26,60 26,56 L26,52 Q26,48 30,48 Z"/>
+
+    <!-- Hotdog bun top (Bun color) -->
     <path
-        android:fillColor="#1976D2"
-        android:pathData="M44,38h20v6h-20z" />
-    <!-- Bottom bar of I -->
+        android:fillColor="#F4E4C1"
+        android:pathData="M28,42 L80,42 Q84,42 84,46 L84,48 L24,48 L24,46 Q24,42 28,42 Z"/>
+
+    <!-- Hotdog bun bottom (Bun color) -->
     <path
-        android:fillColor="#1976D2"
-        android:pathData="M44,64h20v6h-20z" />
+        android:fillColor="#F4E4C1"
+        android:pathData="M28,60 L80,60 L80,62 Q80,66 76,66 L32,66 Q28,66 28,62 Z"/>
+
+    <!-- Mustard zigzag on hotdog -->
+    <path
+        android:fillColor="#F4C430"
+        android:pathData="M32,52 L36,54 L40,52 L44,54 L48,52 L52,54 L56,52 L60,54 L64,52 L68,54 L72,52 L76,54 L76,56 L72,54 L68,56 L64,54 L60,56 L56,54 L52,56 L48,54 L44,56 L40,54 L36,56 L32,54 Z"/>
+
+    <!-- Eyes (Charcoal) -->
+    <path
+        android:fillColor="#2B2D42"
+        android:pathData="M42,50m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+    <path
+        android:fillColor="#2B2D42"
+        android:pathData="M64,50m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+
+    <!-- Smile (Charcoal) -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#2B2D42"
+        android:strokeWidth="2"
+        android:pathData="M46,54 Q54,58 62,54"/>
 </vector>

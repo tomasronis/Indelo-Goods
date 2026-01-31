@@ -42,6 +42,13 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${localProperties.getProperty("SUPABASE_ANON_KEY", "")}\""
         )
+
+        // Anthropic API key from local.properties
+        buildConfigField(
+            "String",
+            "ANTHROPIC_API_KEY",
+            "\"${localProperties.getProperty("ANTHROPIC_API_KEY", "")}\""
+        )
     }
 
     buildTypes {

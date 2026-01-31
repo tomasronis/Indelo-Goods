@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,6 +61,7 @@ fun ShopListScreen(
     onSignOut: () -> Unit,
     onCreateShop: () -> Unit,
     onShopClick: (String) -> Unit,
+    onViewOrderHistory: (String) -> Unit,
     viewModel: ShopViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -136,7 +138,8 @@ fun ShopListScreen(
                         ShopCard(
                             shop = shop,
                             onClick = { shop.id?.let(onShopClick) },
-                            onDelete = { shop.id?.let { viewModel.deleteShop(it) } }
+                            onDelete = { shop.id?.let { viewModel.deleteShop(it) } },
+                            onViewOrderHistory = { shop.id?.let(onViewOrderHistory) }
                         )
                     }
                 }
@@ -205,7 +208,8 @@ private fun EmptyShopsState(
 private fun ShopCard(
     shop: Shop,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onViewOrderHistory: () -> Unit
 ) {
     Card(
         onClick = onClick,
@@ -274,6 +278,15 @@ private fun ShopCard(
                         )
                     }
                 }
+            }
+
+            // Order History button
+            IconButton(onClick = onViewOrderHistory) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = "Order History",
+                    tint = Mustard
+                )
             }
 
             IconButton(onClick = onDelete) {

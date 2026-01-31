@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 data class OrderCartItem(
     val product: Product,
-    val quantity: Int // Number of cases
+    val quantity: Int // Number of units
 ) {
     val subtotal: Double
         get() = product.wholesalePrice * quantity
@@ -37,6 +37,9 @@ data class OrderState(
 
     val totalItems: Int
         get() = items.size
+
+    val estimatedLeadTimeDays: Int
+        get() = items.maxOfOrNull { it.product.leadTimeDays ?: 7 } ?: 7
 }
 
 class OrderViewModel(
@@ -83,23 +86,23 @@ class OrderViewModel(
         _state.update { it.copy(notes = notes) }
     }
 
-    fun addProduct(product: Product) {
+    fun addProduct(product: Product, quantity: Int = product.minimumOrderQuantity) {
         _state.update { currentState ->
             val existingItem = currentState.items.find { it.product.id == product.id }
             val newItems = if (existingItem != null) {
-                // Increase quantity
+                // Add to existing quantity
                 currentState.items.map {
                     if (it.product.id == product.id) {
-                        it.copy(quantity = it.quantity + 1)
+                        it.copy(quantity = it.quantity + quantity)
                     } else {
                         it
                     }
                 }
             } else {
-                // Add new item with minimum order quantity
+                // Add new item with specified quantity
                 currentState.items + OrderCartItem(
                     product = product,
-                    quantity = product.minimumOrderQuantity
+                    quantity = quantity
                 )
             }
             currentState.copy(items = newItems)
@@ -108,7 +111,10 @@ class OrderViewModel(
 
     fun updateQuantity(productId: String, quantity: Int) {
         _state.update { currentState ->
-            val newItems = if (quantity > 0) {
+            val item = currentState.items.find { it.product.id == productId }
+            val minQuantity = item?.product?.minimumOrderQuantity ?: 1
+
+            val newItems = if (quantity >= minQuantity) {
                 currentState.items.map {
                     if (it.product.id == productId) {
                         it.copy(quantity = quantity)
@@ -116,9 +122,18 @@ class OrderViewModel(
                         it
                     }
                 }
-            } else {
-                // Remove item if quantity is 0
+            } else if (quantity <= 0) {
+                // Remove item if quantity is 0 or less
                 currentState.items.filter { it.product.id != productId }
+            } else {
+                // If below minimum but above 0, set to minimum
+                currentState.items.map {
+                    if (it.product.id == productId) {
+                        it.copy(quantity = minQuantity)
+                    } else {
+                        it
+                    }
+                }
             }
             currentState.copy(items = newItems)
         }
