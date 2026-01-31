@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +42,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +69,7 @@ fun ProductDetailScreen(
     productId: String,
     onNavigateBack: () -> Unit,
     onNavigateToProducer: (String) -> Unit,
-    onAddToCart: (Product) -> Unit,
+    onAddToCart: (Product, Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProductViewModel = viewModel()
 ) {
@@ -158,9 +163,11 @@ fun ProductDetailScreen(
 private fun ProductDetailContent(
     product: Product,
     onNavigateToProducer: (String) -> Unit,
-    onAddToCart: (Product) -> Unit,
+    onAddToCart: (Product, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var quantity by remember { mutableIntStateOf(product.minimumOrderQuantity) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -396,15 +403,77 @@ private fun ProductDetailContent(
             Spacer(modifier = Modifier.height(80.dp)) // Space for bottom button
         }
 
-        // Fixed bottom button
-        Box(
+        // Fixed bottom section with quantity controls
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Bun)
+                .background(Color.White)
                 .padding(16.dp)
         ) {
+            // Quantity controls
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Quantity",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Charcoal
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val isAtMinimum = quantity <= product.minimumOrderQuantity
+
+                    IconButton(
+                        onClick = { if (quantity > product.minimumOrderQuantity) quantity-- },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(if (isAtMinimum) Bun.copy(alpha = 0.3f) else Bun),
+                        enabled = !isAtMinimum
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = "Decrease",
+                            tint = if (isAtMinimum) Charcoal.copy(alpha = 0.3f) else Charcoal
+                        )
+                    }
+
+                    Text(
+                        text = "$quantity",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Charcoal,
+                        modifier = Modifier.width(60.dp),
+                        textAlign = TextAlign.Center
+                    )
+
+                    IconButton(
+                        onClick = { quantity++ },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Mustard)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Increase",
+                            tint = Charcoal
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Add to Cart button
             Button(
-                onClick = { onAddToCart(product) },
+                onClick = { onAddToCart(product, quantity) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Ketchup,
@@ -418,11 +487,19 @@ private fun ProductDetailContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Add to Cart",
+                    text = "Add $quantity to Cart",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
+
+            Text(
+                text = "Min. order: ${product.minimumOrderQuantity} units",
+                style = MaterialTheme.typography.bodySmall,
+                color = Charcoal.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

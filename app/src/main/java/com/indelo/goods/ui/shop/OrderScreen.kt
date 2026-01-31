@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ButtonDefaults
@@ -407,6 +409,18 @@ private fun OrderSummary(
 ) {
     var isAddressFocused by remember { mutableStateOf(false) }
     var isNotesFocused by remember { mutableStateOf(false) }
+    var useShopAddress by remember { mutableStateOf(true) }
+    var alternativeAddress by remember { mutableStateOf("") }
+
+    // Get shop's default address
+    val shopDefaultAddress = remember(shop) {
+        buildString {
+            shop?.address?.let { append(it).append("\n") }
+            shop?.city?.let { append(it) }
+            shop?.state?.let { if (shop.city != null) append(", ") else append(""); append(it) }
+            shop?.zipCode?.let { append(" ").append(it) }
+        }.trim()
+    }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -442,30 +456,85 @@ private fun OrderSummary(
                 fontWeight = FontWeight.Bold,
                 color = Charcoal
             )
-            Text(
-                text = "(Confirm or edit your shop's address)",
-                style = MaterialTheme.typography.bodySmall,
-                color = Charcoal.copy(alpha = 0.6f)
-            )
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = deliveryAddress,
-                onValueChange = onDeliveryAddressChange,
-                placeholder = { Text("Enter delivery address") },
-                singleLine = !isAddressFocused,
-                maxLines = if (isAddressFocused) 3 else 1,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        isAddressFocused = focusState.isFocused
-                    },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Mustard,
-                    unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
-                    cursorColor = Ketchup,
-                    focusedLabelColor = Mustard
+
+            // Shop address confirmation
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Bun.copy(alpha = 0.3f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = useShopAddress,
+                            onCheckedChange = { checked ->
+                                useShopAddress = checked
+                                if (checked) {
+                                    onDeliveryAddressChange(shopDefaultAddress)
+                                } else {
+                                    onDeliveryAddressChange(alternativeAddress)
+                                }
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Mustard,
+                                checkmarkColor = Charcoal
+                            )
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Deliver to shop address",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = Charcoal
+                            )
+                            if (shopDefaultAddress.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = shopDefaultAddress,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Charcoal.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Alternative address text field (shown when checkbox is unchecked)
+            if (!useShopAddress) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Enter Alternative Delivery Address",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Ketchup
                 )
-            )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = alternativeAddress,
+                    onValueChange = {
+                        alternativeAddress = it
+                        onDeliveryAddressChange(it)
+                    },
+                    placeholder = { Text("Enter delivery address") },
+                    singleLine = !isAddressFocused,
+                    maxLines = if (isAddressFocused) 3 else 1,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            isAddressFocused = focusState.isFocused
+                        },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Mustard,
+                        unfocusedBorderColor = Charcoal.copy(alpha = 0.3f),
+                        cursorColor = Ketchup,
+                        focusedLabelColor = Mustard
+                    )
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

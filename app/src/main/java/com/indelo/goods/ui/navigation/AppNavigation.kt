@@ -285,8 +285,11 @@ fun AppNavigation(
                 onNavigateToProducer = { producerId ->
                     navController.navigate(Screen.ProducerProfile.createRoute(producerId))
                 },
-                onAddToCart = { product ->
-                    cartViewModel.addToCart(product)
+                onAddToCart = { product, quantity ->
+                    // Add product to shopper cart (repeat by quantity since CartViewModel handles single items)
+                    repeat(quantity) {
+                        cartViewModel.addToCart(product)
+                    }
                     navController.navigate(Screen.Checkout.route)
                 }
             )

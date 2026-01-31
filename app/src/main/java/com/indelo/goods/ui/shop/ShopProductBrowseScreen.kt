@@ -200,7 +200,7 @@ fun ShopProductBrowseScreen(
                                 isSearchFocused = focusState.isFocused
                             },
                         placeholder = {
-                            Text("Ask AI: \"organic drinks\" or \"gluten-free snacks\"...")
+                            Text("What are you looking for?")
                         },
                         leadingIcon = {
                             if (state.isSearching) {
